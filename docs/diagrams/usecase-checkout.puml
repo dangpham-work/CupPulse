@@ -1,0 +1,64 @@
+@startuml usecase-checkout
+' BrewLite – Use-case diagram cho phạm vi UC-01 "Đặt và thanh toán đơn hàng" (Task 1.3)
+' Đặc tả: docs/requirements/use-case-checkout.md
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam usecase {
+  BackgroundColor #FFF8EE
+  BorderColor #7A4A1E
+}
+skinparam actorBorderColor #7A4A1E
+title UC-01 – Đặt và thanh toán đơn hàng
+
+actor "Khách hàng" as Customer
+actor "Payment Service\n<<system>>" as Pay
+
+rectangle "BrewLite – phạm vi UC-01" {
+  usecase "UC-05 Đăng nhập" as Login
+  usecase "UC-08 Áp dụng mã\nkhuyến mãi" as Promo
+  usecase "Thử lại thanh toán" as Retry
+
+  usecase "UC-01 Đặt và thanh toán\nđơn hàng" as UC01 #FFE2B8
+
+  usecase "Xác thực người dùng\n(kiểm tra JWT)" as Auth
+  usecase "Tính tổng tiền" as Price
+  usecase "Kiểm tra và\ntrừ tồn kho" as Stock
+  usecase "UC-09 Tích điểm\nthành viên" as Earn
+  usecase "UC-14 Xử lý giao dịch\nthanh toán" as UC14
+
+  usecase "Thanh toán\nbằng Thẻ" as Card
+  usecase "Thanh toán\nbằng Ví" as Wallet
+}
+
+Customer -right-> UC01
+
+Login .down.> UC01 : <<extend>>\n[chưa đăng nhập]
+Promo .down.> UC01 : <<extend>>\n[nhập mã]
+Retry .down.> UC01 : <<extend>>\n[thất bại / timeout]
+
+UC01 .down.> Auth : <<include>>
+UC01 .down.> Price : <<include>>
+UC01 .down.> Stock : <<include>>
+UC01 .down.> UC14 : <<include>>
+UC01 .down.> Earn : <<include>>
+
+Card -up-|> UC14
+Wallet -up-|> UC14
+UC14 -right- Pay
+
+Login -[hidden]right- Promo
+Promo -[hidden]right- Retry
+Auth -[hidden]right- Price
+Price -[hidden]right- Stock
+Stock -[hidden]right- UC14
+UC14 -[hidden]right- Earn
+
+note bottom of Pay
+  Mỗi yêu cầu gửi kèm Idempotency-Key.
+  Gửi lại cùng khóa → cùng kết quả,
+  không trừ tiền hai lần (FR-06).
+end note
+@enduml
