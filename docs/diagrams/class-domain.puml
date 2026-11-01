@@ -1,0 +1,244 @@
+@startuml class-domain
+' Class-01 – Class diagram mức domain của BrewLite (Task 2.3)
+' Lớp bắt buộc: User, Product, Order, OrderItem, Payment, Promotion, LoyaltyTransaction
+' Lớp bổ trợ để khớp SRS: Category, ProductSize, Topping, OrderItemTopping, OrderStatusHistory, IdempotencyRecord
+' Truy vết: BR-01 → BR-18, FR-01 → FR-16
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 70
+skinparam class {
+  BackgroundColor #FFF8EE
+  BorderColor #7A4A1E
+  ArrowColor #5A3A1A
+}
+skinparam enum {
+  BackgroundColor #EEF6F3
+  BorderColor #2F6B5A
+}
+title Class-01 – Mô hình domain BrewLite
+
+' ===================== Enum =====================
+enum Role {
+  CUSTOMER
+  STAFF
+  MANAGER
+}
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+enum PaymentMethod {
+  CARD
+  WALLET
+}
+enum PromotionType {
+  PERCENT
+  FIXED
+}
+enum LoyaltyType {
+  EARN
+  REDEEM
+}
+enum SizeCode {
+  S
+  M
+  L
+}
+enum IdempotencyStatus {
+  IN_PROGRESS
+  AWAITING_GATEWAY
+  DONE
+}
+
+' ===================== Người dùng =====================
+class User {
+  - id : UUID
+  - email : String {unique}
+  - passwordHash : String
+  - fullName : String
+  - phone : String [0..1]
+  - role : Role
+  - loyaltyPoints : int = 0
+  - createdAt : DateTime
+  + canAccess(role : Role) : boolean
+}
+
+' ===================== Menu =====================
+class Category {
+  - id : UUID
+  - name : String
+  - slug : String {unique}
+  - sortOrder : int
+}
+
+class Product {
+  - id : UUID
+  - name : String
+  - description : String
+  - imageUrl : String
+  - basePrice : int {>= 0}
+  - stock : int {>= 0}
+  - isActive : boolean
+  + isInStock() : boolean
+  + priceFor(size : SizeCode, toppings : Topping[*]) : int
+}
+
+class ProductSize {
+  - code : SizeCode
+  - name : String
+  - extraPrice : int {>= 0}
+}
+
+class Topping {
+  - id : UUID
+  - name : String
+  - price : int {>= 0}
+  - isActive : boolean
+}
+
+' ===================== Đơn hàng =====================
+class Order {
+  - id : UUID
+  - code : String {unique, BL-YYMMDD-NNNN}
+  - status : OrderStatus
+  - subtotal : int
+  - discount : int
+  - pointsRedeemed : int = 0
+  - total : int {>= 0}
+  - failedPaymentCount : int = 0 {<= 3}
+  - expiresAt : DateTime
+  - createdAt : DateTime
+  - paidAt : DateTime [0..1]
+  + canTransitionTo(next : OrderStatus) : boolean
+  + markPaid() : void
+  + cancel(reason : String) : void
+  + isPayable(now : DateTime) : boolean
+}
+
+class OrderItem {
+  - id : UUID
+  - productName : String <<snapshot>>
+  - sizeCode : SizeCode
+  - unitPrice : int <<snapshot>>
+  - quantity : int {1..10}
+  - note : String [0..1] {<= 100 ký tự}
+  + lineTotal() : int
+}
+
+class OrderItemTopping {
+  - toppingName : String <<snapshot>>
+  - price : int <<snapshot>>
+}
+
+class OrderStatusHistory {
+  - id : UUID
+  - fromStatus : OrderStatus [0..1]
+  - toStatus : OrderStatus
+  - changedAt : DateTime
+  - note : String [0..1]
+}
+
+' ===================== Thanh toán =====================
+class Payment {
+  - id : UUID
+  - method : PaymentMethod
+  - status : PaymentStatus
+  - amount : int
+  - idempotencyKey : UUID
+  - transactionId : String [0..1]
+  - failureCode : String [0..1]
+  - cardLast4 : String [0..1]
+  - cardBrand : String [0..1]
+  - createdAt : DateTime
+}
+
+class IdempotencyRecord {
+  - key : UUID
+  - requestHash : String
+  - status : IdempotencyStatus
+  - responseCode : int [0..1]
+  - responseBody : JSON [0..1]
+  - expiresAt : DateTime {= createdAt + 24h}
+}
+
+' ===================== Khuyến mãi và Loyalty =====================
+class Promotion {
+  - id : UUID
+  - code : String {unique}
+  - type : PromotionType
+  - value : int
+  - maxDiscount : int [0..1]
+  - minOrderValue : int
+  - startsAt : DateTime
+  - endsAt : DateTime
+  - usageLimit : int
+  - usedCount : int = 0
+  - isActive : boolean
+  + isApplicable(subtotal : int, now : DateTime) : boolean
+  + calculateDiscount(subtotal : int) : int
+}
+
+class LoyaltyTransaction {
+  - id : UUID
+  - type : LoyaltyType
+  - points : int {EARN > 0, REDEEM < 0}
+  - createdAt : DateTime
+}
+
+' ===================== Quan hệ =====================
+Category "1" -- "0..*" Product : chứa >
+Product "1" *-- "1..3" ProductSize : có size >
+Product "0..*" -- "0..*" Topping : cho phép >
+
+User "1" -- "0..*" Order : đặt >
+Order "1" *-- "1..*" OrderItem : gồm >
+OrderItem "0..*" --> "1" Product : tham chiếu >
+OrderItem "1" *-- "0..3" OrderItemTopping : có >
+OrderItemTopping "0..*" --> "1" Topping : tham chiếu >
+Order "1" *-- "1..*" OrderStatusHistory : lịch sử >
+OrderStatusHistory "0..*" --> "0..1" User : changedBy >
+
+Order "1" -- "0..*" Payment : được thanh toán bởi >
+User "1" -- "0..*" IdempotencyRecord : gửi >
+IdempotencyRecord "0..1" --> "0..1" Payment : kết quả >
+
+Promotion "0..1" -- "0..*" Order : áp dụng cho >
+User "1" -- "0..*" LoyaltyTransaction : sở hữu >
+Order "1" -- "0..2" LoyaltyTransaction : phát sinh >
+
+User ..> Role
+Order ..> OrderStatus
+Payment ..> PaymentStatus
+Payment ..> PaymentMethod
+Promotion ..> PromotionType
+LoyaltyTransaction ..> LoyaltyType
+ProductSize ..> SizeCode
+IdempotencyRecord ..> IdempotencyStatus
+
+note bottom of Payment
+  Mỗi Order có tối đa 1 Payment SUCCEEDED (BR-10),
+  tối đa 3 Payment FAILED (BR-09).
+  Không lưu số thẻ đầy đủ / CVV (BR-18).
+end note
+
+note bottom of LoyaltyTransaction
+  UNIQUE(orderId, type): mỗi đơn
+  chỉ EARN một lần (BR-14).
+end note
+
+note right of IdempotencyRecord
+  UNIQUE(userId, key) – BR-11, FR-06.
+end note
+@enduml
