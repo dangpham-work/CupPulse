@@ -1,0 +1,77 @@
+@startuml usecase-overview
+' BrewLite – Sơ đồ use-case tổng quát (Task 1.2)
+' Nguồn yêu cầu: docs/requirements/srs.md (mục 6)
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam usecase {
+  BackgroundColor #FFF8EE
+  BorderColor #7A4A1E
+}
+skinparam actorBorderColor #7A4A1E
+title BrewLite – Use-case tổng quát
+
+actor "Khách vãng lai" as Guest
+actor "Khách hàng" as Customer
+actor "Nhân viên quầy" as Staff
+actor "Quản lý cửa hàng" as Manager
+
+Guest <|-- Customer
+Staff <|-- Manager
+
+rectangle "Hệ thống BrewLite" {
+  package "Mua hàng" {
+    usecase "UC-02 Xem menu và\nchi tiết sản phẩm" as UC02
+    usecase "UC-03 Quản lý giỏ hàng" as UC03
+    usecase "UC-04 Đăng ký tài khoản" as UC04
+    usecase "UC-05 Đăng nhập / Đăng xuất" as UC05
+  }
+  package "Đặt đơn và thanh toán" {
+    usecase "UC-01 Đặt và thanh toán\nđơn hàng" as UC01 #FFE2B8
+    usecase "UC-08 Áp dụng mã\nkhuyến mãi" as UC08
+    usecase "UC-09 Tích / đổi điểm\nthành viên" as UC09
+    usecase "UC-14 Xử lý giao dịch\nthanh toán" as UC14
+    usecase "UC-12 Hủy đơn\nchưa thanh toán" as UC12
+    usecase "UC-15 Tự hủy đơn quá hạn" as UC15
+  }
+  package "Sau khi đặt" {
+    usecase "UC-06 Theo dõi trạng thái đơn" as UC06
+    usecase "UC-07 Xem lịch sử đơn" as UC07
+  }
+  package "Vận hành cửa hàng" {
+    usecase "UC-10 Cập nhật trạng thái đơn" as UC10
+    usecase "UC-11 Quản lý sản phẩm\nvà tồn kho" as UC11
+    usecase "UC-13 Xem báo cáo doanh thu" as UC13
+  }
+}
+
+actor "Payment Service\n<<system>>" as Pay
+actor "Bộ hẹn giờ\n<<system>>" as Scheduler
+
+Guest --> UC02
+Guest --> UC03
+Guest --> UC04
+
+Customer --> UC05
+Customer --> UC01
+Customer --> UC12
+Customer --> UC06
+Customer --> UC07
+
+Staff --> UC05
+Staff --> UC10
+
+Manager --> UC11
+Manager --> UC13
+
+UC01 ..> UC14 : <<include>>
+UC01 ..> UC09 : <<include>>
+UC08 ..> UC01 : <<extend>>
+
+UC14 --> Pay
+UC15 <-- Scheduler
+
+note "Use-case trọng tâm (Task 1.3)\nFR-04, FR-05, FR-06\nĐặc tả: use-case-checkout.md" as N1
+N1 .. UC01
+@enduml
