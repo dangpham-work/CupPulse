@@ -1,0 +1,11 @@
+{
+  "name": "brewlite-report-word",
+  "private": true,
+  "description": "Sinh báo cáo Word (BrewLite-BaoCao.docx) từ tài liệu Markdown trong docs/",
+  "scripts": {
+    "build": "node build-docx.js"
+  },
+  "dependencies": {
+    "docx": "^9.5.1"
+  }
+}
