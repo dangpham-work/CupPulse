@@ -9,6 +9,7 @@
 \usepackage{enumitem}
 \usepackage[table]{xcolor}
 \usepackage{graphicx}
+\usepackage{adjustbox}
 \usepackage{tabularx, caption}
 \usepackage{longtable}
 \usepackage{float}
@@ -156,6 +157,7 @@ Repository: & \url{https://github.com/dangpham-work/CupPulse} \\
 \hline
 \thead \textbf{Phiên bản} & \textbf{Ngày} & \textbf{Nội dung thay đổi} & \textbf{Người thực hiện} \\ \hline
 1.0 & 01/11/2026 & Task 1 -- Khai thác và đặc tả yêu cầu (bối cảnh, stakeholder, phạm vi, SRS, use-case) & Phạm Duy Đăng \\ \hline
+1.1 & 02/11/2026 & Task 2 -- Mô hình hóa hệ thống (activity, sequence, class, state diagram); ma trận truy vết v0.2 & Phạm Duy Đăng \\ \hline
 \end{tabularx}
 \end{center}
 
@@ -207,7 +209,7 @@ Công nghệ bắt buộc: \textbf{Next.js} (mobile-first/PWA) cho frontend, \te
 \hline
 \thead \textbf{Task} & \textbf{Giai đoạn} & \textbf{Tạo phẩm chính} & \textbf{Điểm} & \textbf{Trạng thái} \\ \hline
 1 & Khai thác và đặc tả yêu cầu & Stakeholder, phạm vi, SRS, use-case tổng quát, đặc tả use-case & 2 & Hoàn thành \\ \hline
-2 & Mô hình hóa hệ thống & Activity, sequence, class diagram & 2 & Chưa thực hiện \\ \hline
+2 & Mô hình hóa hệ thống & Activity, sequence, class diagram & 2 & Hoàn thành \\ \hline
 3 & Thiết kế kiến trúc & Kiến trúc, ADR, deployment diagram & 2 & Chưa thực hiện \\ \hline
 4 & Triển khai Sprint 1 & Repository, tài liệu, CI, MVP xem menu & 2 & Chưa thực hiện \\ \hline
 5 & Sprint 2, CI/CD, Delivery & MVP hoàn chỉnh, CD, production, kiểm thử, bàn giao & 2 & Chưa thực hiện \\ \hline
@@ -220,7 +222,7 @@ báo cáo tới tệp tương ứng trong repository.
 
 \begin{table}[H]
 \centering
-\caption{Ánh xạ báo cáo -- repository (Task 1)}
+\caption{Ánh xạ báo cáo -- repository}
 \begin{tabularx}{\textwidth}{|l|X|}
 \hline
 \thead \textbf{Phần báo cáo} & \textbf{Tệp trong repository} \\ \hline
@@ -229,6 +231,12 @@ Mục \ref{sec:srs} & \code{docs/requirements/srs.md} \\ \hline
 Mục \ref{sec:uc01} & \code{docs/requirements/use-case-checkout.md} \\ \hline
 Hình \ref{fig:uc-overview} & \code{docs/diagrams/usecase-overview.puml}, \code{.svg} \\ \hline
 Hình \ref{fig:uc-checkout} & \code{docs/diagrams/usecase-checkout.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:activity} & \code{docs/diagrams/activity-order-e2e.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:sequence} & \code{docs/diagrams/sequence-checkout.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:class} & \code{docs/diagrams/class-domain.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:state} & \code{docs/diagrams/state-order-payment.puml}, \code{.svg} \\ \hline
+Mục \ref{sec:modeling} & \code{docs/diagrams/README.md} \\ \hline
+Mục \ref{sec:trace} & \code{docs/traceability-matrix.md} \\ \hline
 \end{tabularx}
 \end{table}
 
@@ -238,12 +246,9 @@ Hình \ref{fig:uc-checkout} & \code{docs/diagrams/usecase-checkout.puml}, \code{
 
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Task 2 -- Mô hình hóa hệ thống}
-\begin{notebox}
-Phần này sẽ được bổ sung khi thực hiện Task 2: activity diagram (có swimlane, các nhánh hết hàng, chưa đăng nhập,
-thanh toán thất bại), sequence diagram cho UC-01 và class diagram mức domain.
-\end{notebox}
+\input{chapters/task2-modeling}
 
+\newpage
 \section{Task 3 -- Thiết kế kiến trúc}
 \begin{notebox}
 Phần này sẽ được bổ sung khi thực hiện Task 3: kiến trúc C4/phân lớp, các ADR và UML deployment diagram cho môi
@@ -262,12 +267,7 @@ Phần này sẽ được bổ sung khi thực hiện Task 5: hoàn thiện MVP,
 triển khai production và bàn giao.
 \end{notebox}
 
-\section{Ma trận truy vết}
-\begin{notebox}
-Ma trận truy vết đầy đủ (\code{docs/traceability-matrix.md}) được hoàn thiện dần qua các task. Ở Task 1 đã có
-liên kết Yêu cầu $\leftrightarrow$ Use-case $\leftrightarrow$ User story (Bảng \ref{tab:usecases} và
-Bảng \ref{tab:userstories}).
-\end{notebox}
+\input{chapters/traceability}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{thebibliography}{9}
