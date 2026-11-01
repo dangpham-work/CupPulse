@@ -57,7 +57,7 @@ SH-01 & \textbf{Khách hàng} & Người dùng cuối, đặt và trả tiền &
 SH-02 & \textbf{Nhân viên quầy} & Nhận, chế biến đơn, cập nhật trạng thái & Làm đúng món, ít bị hỏi, thao tác nhanh giờ cao điểm & Chỉ thấy đơn đã thanh toán; chi tiết đơn rõ (size, topping, ghi chú); đổi trạng thái một chạm & Trung bình \\ \hline
 SH-03 & \textbf{Quản lý cửa hàng} & Chủ nghiệp vụ; quản lý menu, kho, khuyến mãi & Tăng doanh thu, kiểm soát tồn kho, giữ chân khách & Sửa sản phẩm, giá, tồn kho; tạo mã khuyến mãi; xem doanh thu; không bán món đã hết & Cao \\ \hline
 SH-04 & \textbf{Giảng viên / khách hàng nghiệm thu} & Đánh giá và nghiệm thu sản phẩm & Kiểm chứng nhóm đi đúng quy trình từ yêu cầu đến triển khai & Tạo phẩm đủ, đúng đường dẫn, truy vết được; CI/CD chạy; URL production hoạt động; clone về chạy được theo README & Rất cao \\ \hline
-SH-05 & \textbf{Nhóm phát triển} & Phân tích, thiết kế, lập trình, kiểm thử, triển khai & Hoàn thành đúng hạn, học quy trình chuẩn & Yêu cầu rõ ràng, ổn định; stack bắt buộc; hạ tầng miễn phí & Cao \\ \hline
+SH-05 & \textbf{Nhóm phát triển} (1 SV: Phạm Duy Đăng) & Kiêm mọi vai trò: PO, phân tích, thiết kế, lập trình, kiểm thử, triển khai & Hoàn thành đúng hạn, học quy trình chuẩn & Yêu cầu rõ ràng, ổn định; stack bắt buộc; hạ tầng miễn phí & Cao \\ \hline
 SH-06 & \textbf{Đơn vị thanh toán} (mô phỏng) & Hệ thống ngoài xử lý giao dịch Ví/Thẻ & Giao dịch hợp lệ, không trừ tiền trùng & API rõ ràng; mỗi giao dịch có idempotency key; trả kết quả kèm mã lỗi; không nhận dữ liệu thẻ thừa & Trung bình \\ \hline
 \end{longtable}
 
@@ -167,6 +167,7 @@ C7 & Triển khai & Production có HTTPS; database không public; secret không 
 C8 & Thời gian & Hai Sprint trong học kỳ I 2026--2027; production phải hoạt động lúc chấm. \\ \hline
 C9 & Chi phí & 0 đồng: chỉ dùng gói miễn phí (GitHub, GHCR, Vercel/Render/Neon hoặc tương đương). \\ \hline
 C10 & Pháp lý & Không lưu số thẻ đầy đủ hay CVV, kể cả dữ liệu mô phỏng; chỉ lưu 4 số cuối. \\ \hline
+C11 & Nhân lực & Đề tài do một sinh viên thực hiện, kiêm toàn bộ vai trò; không có người review chéo trong nhóm. \\ \hline
 \end{longtable}
 
 \subsubsection{Rủi ro ban đầu}
@@ -184,10 +185,11 @@ R1 & Nền tảng miễn phí hết hạn hoặc ngủ đúng lúc chấm & 2 & 
 R2 & Bán vượt tồn kho khi nhiều khách đặt cùng lúc & 2 & 3 & \textbf{6} & Trừ kho có điều kiện \code{stock >= qty} trong transaction; test đồng thời (NFR-13) \\ \hline
 R3 & Trừ tiền hai lần khi khách bấm lại hoặc mạng chập chờn & 2 & 3 & \textbf{6} & Idempotency key cho mỗi yêu cầu thanh toán; tối đa 1 payment thành công mỗi đơn (FR-06) \\ \hline
 R4 & Phạm vi phình to làm trễ luồng chính & 3 & 2 & \textbf{6} & Ưu tiên MoSCoW; làm Must trước, Should/Could sau khi luồng end-to-end chạy \\ \hline
-R5 & Thành viên chưa quen NestJS, Docker, CI/CD & 2 & 2 & 4 & Dựng khung và CI từ Sprint 1; pair programming; README \\ \hline
+R5 & Chưa quen NestJS, Docker, CI/CD & 2 & 2 & 4 & Dựng khung và CI từ Sprint 1; làm theo tài liệu chính thức; ghi lại trong README \\ \hline
 R6 & Lộ secret lên GitHub & 1 & 3 & 3 & \code{.env} trong \code{.gitignore}; chỉ commit \code{.env.example}; GitHub Secrets; quét secret trong CI \\ \hline
 R7 & Tài liệu và code lệch nhau & 2 & 2 & 4 & Ma trận truy vết; mọi thay đổi yêu cầu qua PR \\ \hline
 R8 & Cold start làm smoke test hoặc demo chậm & 2 & 1 & 2 & Smoke test có retry; ``đánh thức'' dịch vụ trước demo \\ \hline
+R9 & Một người làm toàn bộ: quá tải, không ai review chéo & 2 & 3 & \textbf{6} & Cắt phạm vi theo MoSCoW; CI tự động thay review chéo; mọi thay đổi qua PR có checklist \\ \hline
 \end{longtable}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
