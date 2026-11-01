@@ -54,7 +54,7 @@ Xem menu → Chọn tùy chọn → Giỏ hàng → Đặt đơn → Thanh toán
 | SH-02 | **Nhân viên quầy** | Nhận và chế biến đơn, cập nhật trạng thái | Làm đúng món, ít bị hỏi, thao tác nhanh giờ cao điểm | Chỉ thấy đơn **đã thanh toán**; chi tiết đơn rõ (size, topping, ghi chú); đổi trạng thái 1 chạm | Trung bình | Cao |
 | SH-03 | **Quản lý cửa hàng** | Chủ nghiệp vụ, quản lý menu, kho, khuyến mãi | Tăng doanh thu, kiểm soát tồn kho, giữ chân khách | Sửa sản phẩm, giá, tồn kho; tạo mã khuyến mãi; xem doanh thu cơ bản; không bán món đã hết | Cao | Cao |
 | SH-04 | **Giảng viên / khách hàng nghiệm thu** | Đánh giá và nghiệm thu sản phẩm | Kiểm chứng nhóm đi đúng quy trình từ yêu cầu đến triển khai | Tạo phẩm đủ, đúng đường dẫn, truy vết được; CI/CD chạy; URL production hoạt động; clone về chạy được theo README | Rất cao | Cao |
-| SH-05 | **Nhóm phát triển** | Phân tích, thiết kế, lập trình, kiểm thử, triển khai | Hoàn thành đúng hạn, đạt điểm tối đa, học quy trình chuẩn | Yêu cầu rõ ràng và ổn định; stack bắt buộc (Next.js, NestJS, PostgreSQL); hạ tầng miễn phí | Cao | Cao |
+| SH-05 | **Nhóm phát triển** (1 sinh viên: Phạm Duy Đăng) | Kiêm mọi vai trò: Product Owner, phân tích, thiết kế, lập trình, kiểm thử, triển khai | Hoàn thành đúng hạn, đạt điểm tối đa, học quy trình chuẩn | Yêu cầu rõ ràng và ổn định; stack bắt buộc (Next.js, NestJS, PostgreSQL); hạ tầng miễn phí | Cao | Cao |
 | SH-06 | **Đơn vị thanh toán** (mô phỏng) | Hệ thống bên ngoài xử lý giao dịch Ví/Thẻ | Giao dịch hợp lệ, không trừ tiền trùng | API rõ ràng; mỗi giao dịch có idempotency key; trả kết quả thành công/thất bại kèm mã lỗi; không nhận dữ liệu thẻ thừa | Trung bình | Trung bình |
 
 ### 2.2 Ma trận quyền lực – quan tâm
@@ -143,6 +143,7 @@ Mức ưu tiên dùng MoSCoW và khớp với mã yêu cầu trong [SRS](srs.md)
 | C8 | Thời gian | Hai Sprint trong học kỳ I 2026–2027. Production phải hoạt động lúc chấm. |
 | C9 | Chi phí | 0 đồng: chỉ dùng gói miễn phí (GitHub, GHCR, Vercel/Render/Neon hoặc tương đương). |
 | C10 | Pháp lý | Không lưu số thẻ đầy đủ hay CVV, kể cả dữ liệu mô phỏng. Chỉ lưu 4 số cuối. |
+| C11 | Nhân lực | Đề tài do **một sinh viên** thực hiện, kiêm toàn bộ vai trò. Không có người review chéo trong nhóm. |
 
 ## 6. Rủi ro ban đầu
 
@@ -153,11 +154,14 @@ Thang đo: Xác suất (X) và Tác động (T) từ 1 (thấp) đến 3 (cao). 
 | R1 | Nền tảng miễn phí hết hạn hoặc ngủ đúng lúc chấm (ví dụ Render Postgres free hết hạn sau 30 ngày) | 2 | 3 | **6** | Dùng Postgres không hết hạn (Neon); smoke test định kỳ; ghi sẵn quy trình redeploy và rollback | DevOps |
 | R2 | Bán vượt tồn kho khi nhiều khách đặt cùng lúc | 2 | 3 | **6** | Trừ kho bằng câu lệnh có điều kiện `stock >= qty` trong transaction; test đồng thời (NFR-17) | Backend |
 | R3 | Trừ tiền hai lần khi khách bấm lại hoặc mạng chập chờn | 2 | 3 | **6** | Idempotency key cho mỗi yêu cầu thanh toán; mỗi đơn chỉ có tối đa 1 payment thành công (FR-06) | Backend |
-| R4 | Phạm vi phình to (loyalty, báo cáo…) làm trễ luồng chính | 3 | 2 | **6** | Ưu tiên MoSCoW; làm Must trước; Should/Could chỉ làm khi luồng end-to-end đã chạy | PO / nhóm |
-| R5 | Thành viên chưa quen NestJS, Docker hoặc CI/CD | 2 | 2 | 4 | Dựng khung và CI từ Sprint 1; pair programming; tài liệu README | Nhóm |
+| R4 | Phạm vi phình to (loyalty, báo cáo…) làm trễ luồng chính | 3 | 2 | **6** | Ưu tiên MoSCoW; làm Must trước; Should/Could chỉ làm khi luồng end-to-end đã chạy | PO |
+| R5 | Chưa quen NestJS, Docker hoặc CI/CD | 2 | 2 | 4 | Dựng khung và CI ngay từ Sprint 1; làm theo tài liệu chính thức; ghi lại cách làm trong README | Dev |
 | R6 | Lộ secret (JWT secret, DB URL) lên GitHub | 1 | 3 | 3 | `.env` trong `.gitignore`; chỉ commit `.env.example`; secret để ở GitHub Secrets/nền tảng; quét secret trong CI | DevOps |
 | R7 | Tài liệu và code lệch nhau giữa các task | 2 | 2 | 4 | Ma trận truy vết; mọi thay đổi yêu cầu đều qua PR | BA |
 | R8 | Cold start làm smoke test hoặc demo chậm | 2 | 1 | 2 | Smoke test có retry và timeout hợp lý; gọi "đánh thức" trước buổi demo | DevOps |
+| R9 | Một người làm toàn bộ: quá tải, không ai review chéo, ốm đau làm dừng dự án | 2 | 3 | **6** | Cắt phạm vi theo MoSCoW; CI tự động thay cho review chéo; mọi thay đổi qua PR có checklist; chia việc nhỏ theo Sprint backlog | PO |
+
+*Đề tài do một sinh viên thực hiện. Cột "Người theo dõi" ghi vai trò chịu trách nhiệm, cả 5 vai trò (PO, BA, Backend, DevOps, Dev) đều do Phạm Duy Đăng đảm nhận.*
 
 ---
 
