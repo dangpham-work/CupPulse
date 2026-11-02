@@ -1,0 +1,98 @@
+@startuml deployment
+' Deployment-01 – UML deployment diagram môi trường production thực tế: Vercel + Render + GitHub (Task 3.2)
+' Mỗi node/artifact truy vết tới container C4-02 và thư mục mã nguồn (xem docs/architecture/deployment-view.md)
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam nodesep 40
+skinparam ranksep 55
+skinparam node {
+  BackgroundColor #FFF8EE
+  BorderColor #7A4A1E
+}
+skinparam artifact {
+  BackgroundColor #FFFFFF
+  BorderColor #7A4A1E
+}
+skinparam database {
+  BackgroundColor #EEF6F3
+  BorderColor #2F6B5A
+}
+skinparam rectangle {
+  BorderColor #555555
+  BorderStyle dashed
+}
+title Deployment-01 – BrewLite: Local, CI và Production (Vercel + Render)
+
+' ===================== CI =====================
+rectangle "CI – GitHub" as CI {
+  node "GitHub Repository\ndangpham-work/CupPulse" as repo
+  node "GitHub Actions runner\n<<execution environment>>\nubuntu-latest" as runner {
+    artifact "ci.yml: install → lint → test → build" as ci_wf
+    artifact "cd.yml: build image → push → deploy → smoke test" as cd_wf
+  }
+  node "GitHub Container Registry\nghcr.io/dangpham-work/brewlite-api\n<<registry>>" as ghcr {
+    artifact "brewlite-api:<commit-sha>\nbrewlite-api:v1.x.y" as img
+  }
+  artifact "GitHub Secrets:\nRENDER_DEPLOY_HOOK_URL\nVERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID" as gh_secrets
+}
+
+' ===================== PRODUCTION =====================
+rectangle "PRODUCTION" as PROD {
+  node "Thiết bị người dùng\n<<device>>\nđiện thoại / tablet / laptop" as device {
+    node "Trình duyệt / PWA\n<<execution environment>>" as browser {
+      artifact "Service worker\n+ cache tĩnh" as sw
+    }
+  }
+
+  node "Render (region Singapore)\n<<platform>>" as render {
+    node "Web Service brewlite-api\n<<container>>\nHTTPS :443 → PORT 10000" as r_api {
+      artifact "Image brewlite-api:<sha>\n(apps/api: NestJS)\n+ PaymentMockModule = Payment Service\nmô phỏng, gọi qua HTTP /mock-gateway" as api_art
+      artifact "Start: prisma migrate deploy\n&& node dist/main.js" as start
+    }
+    artifact "Health check: GET /health\n(Render tự kiểm tra, rollback nếu fail)" as r_health
+    artifact "Env (secret): DATABASE_URL (internal),\nJWT_SECRET, CORS_ORIGIN,\nPAYMENT_GATEWAY_URL, PAYMENT_MOCK_ENABLED,\nNODE_ENV, LOG_LEVEL" as r_env
+    artifact "Log: Render Logs (JSON, pino)" as r_log
+    database "Render PostgreSQL 16\nbrewlite-db\n<<database server>>\npersistent disk, backup hằng ngày\nchỉ kết nối nội bộ (external access: tắt)" as r_db
+  }
+  node "Vercel\n<<platform>>" as vercel {
+    node "Edge Network / CDN\n<<execution environment>>\nHTTPS :443, TLS tự động" as cdn {
+      artifact "Static assets\n(_next/static, icons, manifest)" as static
+    }
+    node "Vercel Functions\n<<execution environment>>\nNode.js runtime" as fn {
+      artifact "apps/web\n(Next.js build: SSR, route handlers)" as web_art
+    }
+    artifact "Env: NEXT_PUBLIC_API_URL" as v_env
+    artifact "Log: Vercel Runtime Logs" as v_log
+  }
+
+}
+
+' ===================== LOCAL =====================
+rectangle "LOCAL – máy lập trình viên" as LOCAL {
+  node "Docker Engine\n<<device>>" as dev {
+    node "web\n<<container>>\n:3000" as l_web
+    node "api\n<<container>>\n:4000" as l_api
+    database "db\n<<container>>\npostgres:16 :5432\nvolume pgdata" as l_db
+  }
+  artifact "docker-compose.yml\n.env (không commit)" as l_compose
+}
+
+' ===================== KẾT NỐI =====================
+l_web --> l_api : HTTP :4000
+l_api --> l_db : TCP :5432 (mạng docker)
+
+repo --> runner : push / pull_request / tag v*
+runner --> ghcr : docker push (GITHUB_TOKEN)
+runner --> r_api : POST deploy hook ?imgURL=…:<sha>
+runner --> vercel : vercel deploy --prod (VERCEL_TOKEN)
+runner ..> r_api : smoke test GET /health, GET /products (HTTPS)
+ghcr --> r_api : pull image (registry credential)
+
+browser --> cdn : HTTPS :443\nhttps://brewlite.vercel.app
+cdn --> fn : nội bộ Vercel
+browser --> r_api : HTTPS :443 REST /api/v1 (Bearer JWT)\nhttps://brewlite-api.onrender.com
+r_api --> r_db : TCP :5432 mạng nội bộ Render (TLS)
+
+' Đặt LOCAL cạnh CI cho sơ đồ gọn; DB production không có địa chỉ public (xem nhãn brewlite-db)
+LOCAL -[hidden]right- CI
+@enduml

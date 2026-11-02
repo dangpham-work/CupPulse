@@ -158,6 +158,7 @@ Repository: & \url{https://github.com/dangpham-work/CupPulse} \\
 \thead \textbf{Phiên bản} & \textbf{Ngày} & \textbf{Nội dung thay đổi} & \textbf{Người thực hiện} \\ \hline
 1.0 & 01/11/2026 & Task 1 -- Khai thác và đặc tả yêu cầu (bối cảnh, stakeholder, phạm vi, SRS, use-case) & Phạm Duy Đăng \\ \hline
 1.1 & 02/11/2026 & Task 2 -- Mô hình hóa hệ thống (activity, sequence, class, state diagram); ma trận truy vết v0.2 & Phạm Duy Đăng \\ \hline
+1.2 & 02/11/2026 & Task 3 -- Thiết kế kiến trúc (C4, 9 ADR, deployment diagram); ma trận truy vết v0.3 & Phạm Duy Đăng \\ \hline
 \end{tabularx}
 \end{center}
 
@@ -210,7 +211,7 @@ Công nghệ bắt buộc: \textbf{Next.js} (mobile-first/PWA) cho frontend, \te
 \thead \textbf{Task} & \textbf{Giai đoạn} & \textbf{Tạo phẩm chính} & \textbf{Điểm} & \textbf{Trạng thái} \\ \hline
 1 & Khai thác và đặc tả yêu cầu & Stakeholder, phạm vi, SRS, use-case tổng quát, đặc tả use-case & 2 & Hoàn thành \\ \hline
 2 & Mô hình hóa hệ thống & Activity, sequence, class diagram & 2 & Hoàn thành \\ \hline
-3 & Thiết kế kiến trúc & Kiến trúc, ADR, deployment diagram & 2 & Chưa thực hiện \\ \hline
+3 & Thiết kế kiến trúc & Kiến trúc, ADR, deployment diagram & 2 & Hoàn thành \\ \hline
 4 & Triển khai Sprint 1 & Repository, tài liệu, CI, MVP xem menu & 2 & Chưa thực hiện \\ \hline
 5 & Sprint 2, CI/CD, Delivery & MVP hoàn chỉnh, CD, production, kiểm thử, bàn giao & 2 & Chưa thực hiện \\ \hline
 \end{tabularx}
@@ -236,6 +237,9 @@ Hình \ref{fig:sequence} & \code{docs/diagrams/sequence-checkout.puml}, \code{.s
 Hình \ref{fig:class} & \code{docs/diagrams/class-domain.puml}, \code{.svg} \\ \hline
 Hình \ref{fig:state} & \code{docs/diagrams/state-order-payment.puml}, \code{.svg} \\ \hline
 Mục \ref{sec:modeling} & \code{docs/diagrams/README.md} \\ \hline
+Mục \ref{sec:architecture} & \code{docs/architecture/architecture.md}, \code{docs/architecture/adr/00x-*.md} \\ \hline
+Hình \ref{fig:c4-context} -- \ref{fig:c4-component} & \code{docs/architecture/diagrams/c4-*.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:deployment} & \code{docs/architecture/diagrams/deployment.puml}, \code{.svg}; \code{docs/architecture/deployment-view.md} \\ \hline
 Mục \ref{sec:trace} & \code{docs/traceability-matrix.md} \\ \hline
 \end{tabularx}
 \end{table}
@@ -249,11 +253,9 @@ Mục \ref{sec:trace} & \code{docs/traceability-matrix.md} \\ \hline
 \input{chapters/task2-modeling}
 
 \newpage
-\section{Task 3 -- Thiết kế kiến trúc}
-\begin{notebox}
-Phần này sẽ được bổ sung khi thực hiện Task 3: kiến trúc C4/phân lớp, các ADR và UML deployment diagram cho môi
-trường production.
-\end{notebox}
+\input{chapters/task3-architecture}
+
+\newpage
 
 \section{Task 4 -- Triển khai Sprint 1}
 \begin{notebox}

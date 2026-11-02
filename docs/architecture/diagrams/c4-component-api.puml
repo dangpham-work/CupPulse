@@ -1,0 +1,42 @@
+@startuml c4-component-api
+' C4-03 – Mức 3: Component của container API (NestJS, chia module theo domain) (Task 3.1)
+!include <C4/C4_Component>
+LAYOUT_TOP_DOWN()
+title C4-03 – Component: NestJS API (modular monolith)
+
+Container(web, "Web App", "Next.js PWA")
+ContainerDb(db, "Database", "PostgreSQL 16")
+
+Container_Boundary(api, "API – apps/api/src") {
+  Component(common, "Common / Infrastructure", "Guards, Pipes, Filters, Interceptors", "JwtAuthGuard, RolesGuard, ValidationPipe, HttpExceptionFilter (định dạng lỗi chung), RequestIdInterceptor, ThrottlerGuard. common/")
+  Component(config, "ConfigModule", "@nestjs/config + zod", "Đọc và kiểm tra biến môi trường khi khởi động. config/")
+  Component(health, "HealthModule", "@nestjs/terminus", "GET /health: trạng thái tiến trình và DB. modules/health")
+  Component(auth, "AuthModule", "Passport JWT, bcrypt", "Đăng ký, đăng nhập, cấp JWT, /me. FR-09 → FR-11. modules/auth")
+  Component(catalog, "CatalogModule", "Controller + Service", "GET /products, /products/:id, quản lý sản phẩm, tồn kho. FR-01, FR-02, FR-16, FR-17. modules/catalog")
+  Component(pricing, "PricingModule", "Domain service", "Tính giá dòng, tạm tính, khuyến mãi (BR-02 → BR-05, BR-13). modules/pricing")
+  Component(orders, "OrdersModule", "Controller + Service + State machine", "Tạo đơn trong transaction, trừ/hoàn kho, hủy, hết hạn, trạng thái. FR-04, FR-07, FR-08, FR-12, FR-13. modules/orders")
+  Component(payments, "PaymentsModule", "Controller + Service + Idempotency", "POST /payments, IdempotencyRecord, gọi cổng qua PaymentGatewayClient. FR-05, FR-06. modules/payments")
+  Component(loyalty, "LoyaltyModule", "Domain service", "Cộng/trừ điểm khi đơn PAID. FR-15, FR-18. modules/loyalty")
+  Component(promotions, "PromotionsModule", "Controller + Service", "POST /promotions/validate, tăng usedCount khi PAID. FR-14. modules/promotions")
+  Component(mock, "PaymentMockModule", "Controller", "POST /mock-gateway/charges: mô phỏng đơn vị thanh toán. modules/payment-mock")
+  Component(prisma, "PrismaModule", "Prisma Client", "Truy cập DB, transaction ($transaction). prisma/")
+}
+
+Rel(web, auth, "POST /auth/*", "HTTPS")
+Rel(web, catalog, "GET /products", "HTTPS")
+Rel(web, orders, "POST/GET /orders", "HTTPS")
+Rel(web, payments, "POST /payments", "HTTPS")
+Rel(orders, pricing, "quote()")
+Rel(pricing, promotions, "calculateDiscount()")
+Rel(promotions, prisma, "dùng")
+Rel(payments, orders, "markPaid() / recordFailure()")
+Rel(payments, loyalty, "earn()")
+Rel(payments, mock, "POST /charges", "HTTP, Idempotency-Key")
+Rel(auth, prisma, "dùng")
+Rel(catalog, prisma, "dùng")
+Rel(orders, prisma, "dùng")
+Rel(payments, prisma, "dùng")
+Rel(loyalty, prisma, "dùng")
+Rel(health, prisma, "SELECT 1")
+Rel(prisma, db, "SQL", "TCP 5432")
+@enduml
