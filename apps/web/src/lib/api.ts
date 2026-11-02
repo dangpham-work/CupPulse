@@ -23,6 +23,9 @@ async function getJson<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+// Minh chứng Task 4.4: biến không dùng → ESLint báo lỗi, CI phải đỏ và chặn merge.
+const unusedForCiDemo = 'lint-error';
+
 /** GET /products – FR-01. */
 export function fetchProducts(): Promise<ProductSummary[]> {
   return getJson<ProductSummary[]>('/products');
