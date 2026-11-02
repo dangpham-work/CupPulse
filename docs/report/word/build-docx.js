@@ -221,10 +221,18 @@ function figure(file, caption, { maxH = MAX_IMG_H } = {}) {
   ];
 }
 
-// Ảnh trong Markdown trỏ tới ../diagrams/*.svg → PNG trong docs/report/figures.
+// Chú thích đầy đủ cho ảnh Markdown chỉ ghi mã sơ đồ.
+const CAPTIONS = {
+  "C4-01": "C4-01 – Sơ đồ ngữ cảnh hệ thống (System Context)",
+  "C4-02": "C4-02 – Sơ đồ container",
+  "C4-03": "C4-03 – Sơ đồ component của NestJS API",
+  "Deployment-01": "Deployment-01 – UML deployment diagram môi trường production",
+};
+
+// Ảnh trong Markdown trỏ tới diagrams/*.svg → PNG trong docs/report/figures.
 function figureFromMarkdown(alt, src) {
   const base = path.basename(src).replace(/\.svg$/i, ".png");
-  return figure(path.join(FIGURES, base), alt);
+  return figure(path.join(FIGURES, base), CAPTIONS[alt] || alt);
 }
 
 // ---------------------------------------------------------------- Markdown → khối Word
@@ -457,6 +465,7 @@ const frontMatter = [
       ["Phiên bản", "Ngày", "Nội dung thay đổi", "Người thực hiện"],
       ["1.0", "01/11/2026", "Task 1 – Khai thác và đặc tả yêu cầu (bối cảnh, stakeholder, phạm vi, SRS, use-case)", "Phạm Duy Đăng"],
       ["1.1", "02/11/2026", "Task 2 – Mô hình hóa hệ thống (activity, sequence, class, state diagram); ma trận truy vết v0.2", "Phạm Duy Đăng"],
+      ["1.2", "02/11/2026", "Task 3 – Thiết kế kiến trúc (C4, 9 ADR, deployment diagram); ma trận truy vết v0.3", "Phạm Duy Đăng"],
     ],
     { widths: [0.12, 0.15, 0.53, 0.2] },
   ),
@@ -487,7 +496,7 @@ const chapter1 = [
       ["Task", "Giai đoạn", "Tạo phẩm chính", "Điểm", "Trạng thái"],
       ["1", "Khai thác và đặc tả yêu cầu", "Stakeholder, phạm vi, SRS, use-case tổng quát, đặc tả use-case", "2", "Hoàn thành"],
       ["2", "Mô hình hóa hệ thống", "Activity, sequence, class diagram", "2", "Hoàn thành"],
-      ["3", "Thiết kế kiến trúc", "Kiến trúc, ADR, deployment diagram", "2", "Chưa thực hiện"],
+      ["3", "Thiết kế kiến trúc", "Kiến trúc, ADR, deployment diagram", "2", "Hoàn thành"],
       ["4", "Triển khai Sprint 1", "Repository, tài liệu, CI, MVP xem menu", "2", "Chưa thực hiện"],
       ["5", "Sprint 2, CI/CD, Delivery", "MVP hoàn chỉnh, CD, production, kiểm thử, bàn giao", "2", "Chưa thực hiện"],
     ],
@@ -502,6 +511,9 @@ const chapter1 = [
       ["Mục 2.2", "`docs/requirements/srs.md`"],
       ["Mục 2.3", "`docs/requirements/use-case-checkout.md`"],
       ["Chương 3 (sơ đồ)", "`docs/diagrams/*.puml`, `docs/diagrams/*.svg`, `docs/diagrams/README.md`"],
+      ["Mục 4.1", "`docs/architecture/architecture.md`, `docs/architecture/diagrams/c4-*.puml`, `.svg`"],
+      ["Mục 4.2", "`docs/architecture/adr/001-*.md` → `009-*.md`"],
+      ["Mục 4.3", "`docs/architecture/deployment-view.md`, `docs/architecture/diagrams/deployment.puml`, `.svg`"],
       ["Chương 7", "`docs/traceability-matrix.md`"],
     ],
     { widths: [0.3, 0.7] },
@@ -573,8 +585,24 @@ function placeholder(title, text) {
   ];
 }
 
+// ---------------------------------------------------------------- Chương 4 – Task 3
+const arch = (...p) => path.join(DOCS_DIR, "architecture", ...p);
+const adrFiles = fs
+  .readdirSync(arch("adr"))
+  .filter((f) => /^\d{3}-.*\.md$/.test(f))
+  .sort();
+const chapter4 = [
+  heading("Task 3 – Thiết kế kiến trúc", 1, { pageBreak: true }),
+  heading("Task 3.1 – Phương pháp và quyết định kiến trúc", 2),
+  ...markdown(arch("architecture.md"), { skipTitle: true, shift: 1 }),
+  heading("Các quyết định kiến trúc (ADR)", 2, { pageBreak: true }),
+  ...markdown(arch("adr", "README.md"), { skipTitle: true, shift: 1 }),
+  ...adrFiles.flatMap((f) => markdown(arch("adr", f), { shift: 2 })),
+  heading("Task 3.2 – Deployment diagram", 2, { pageBreak: true }),
+  ...markdown(arch("deployment-view.md"), { skipTitle: true, shift: 1 }),
+];
+
 const laterChapters = [
-  ...placeholder("Task 3 – Thiết kế kiến trúc", "Phần này sẽ được bổ sung khi thực hiện Task 3: kiến trúc C4/phân lớp, các ADR và UML deployment diagram cho môi trường production."),
   ...placeholder("Task 4 – Triển khai Sprint 1", "Phần này sẽ được bổ sung khi thực hiện Task 4: thiết lập repository, quản lý tài liệu, MVP xem menu và Continuous Integration."),
   ...placeholder(
     "Task 5 – Triển khai Sprint 2, CI/CD và Delivery",
@@ -666,7 +694,7 @@ const doc = new Document({
       properties: { page: { size: PAGE, margin: MARGIN } },
       headers: { default: header },
       footers: { default: footer },
-      children: [...frontMatter, ...chapter1, ...chapter2, ...chapter3, ...laterChapters, ...references],
+      children: [...frontMatter, ...chapter1, ...chapter2, ...chapter3, ...chapter4, ...laterChapters, ...references],
     },
   ],
 });
