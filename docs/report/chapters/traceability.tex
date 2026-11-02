@@ -1,7 +1,7 @@
 % Ma trận truy vết – nguồn: docs/traceability-matrix.md
 \section{Ma trận truy vết}\label{sec:trace}
 
-Ma trận truy vết (\code{docs/traceability-matrix.md}, phiên bản 0.2 sau Task 2) liên kết mỗi yêu cầu với use-case/user
+Ma trận truy vết (\code{docs/traceability-matrix.md}, phiên bản 0.3 sau Task 3) liên kết mỗi yêu cầu với use-case/user
 story, sơ đồ thiết kế, API và test. Cột Code/API hiện là hợp đồng API từ SRS; cột Test là mã test dự kiến. Hai cột này
 được cập nhật thành đường dẫn mã nguồn và kết quả test thật ở Task 4--5.
 
@@ -17,16 +17,16 @@ bước; \code{E2E} end-to-end; \code{SMOKE} smoke test sau triển khai.
 \hline
 \thead \textbf{Mã yêu cầu} & \textbf{UC / User Story} & \textbf{Thiết kế / Sơ đồ} & \textbf{Code / API} & \textbf{Test} \\ \hline
 \endhead
-FR-01 & US-01 Xem menu, UC-02 & Activity-01, Class-01 & \code{GET /products} & API-T01, E2E-T01 \\ \hline
+FR-01 & US-01 Xem menu, UC-02 & Activity-01, Class-01, C4-03 Catalog & \code{GET /products} & API-T01, E2E-T01 \\ \hline
 FR-02 & US-02, UC-02 & Activity-01, Class-01 & \code{GET /products/:id} & API-T02, UNIT-T01 \\ \hline
 FR-03 & US-03, UC-03 & Activity-01 & Giỏ hàng phía client & UNIT-T02, E2E-T01 \\ \hline
-FR-04 & US-05, UC-01 & Activity-01, Sequence-01, Class-01, State-01 & \code{POST /orders} & INT-T01, INT-T02, INT-T06 \\ \hline
-FR-05 & US-05, UC-01 Thanh toán & Sequence-01, Class-01, State-01 & \code{POST /payments} & INT-T03, INT-T04 \\ \hline
-FR-06 & US-05, UC-01 & Sequence-01, Class-01 & \code{POST /payments} + \code{Idempotency-Key} & INT-T05 \\ \hline
-FR-07 & US-06, UC-06 & Activity-01, Sequence-01, State-01 & \code{GET /orders/:id} & API-T03, E2E-T01 \\ \hline
+FR-04 & US-05, UC-01 & Activity-01, Sequence-01, Class-01, State-01, C4-03 Orders, ADR-002 & \code{POST /orders} & INT-T01, INT-T02, INT-T06 \\ \hline
+FR-05 & US-05, UC-01 Thanh toán & Sequence-01, Class-01, State-01, C4-03 Payments, ADR-005 & \code{POST /payments} & INT-T03, INT-T04 \\ \hline
+FR-06 & US-05, UC-01 & Sequence-01, Class-01, ADR-004, ADR-005 & \code{POST /payments} + \code{Idempotency-Key} & INT-T05 \\ \hline
+FR-07 & US-06, UC-06 & Activity-01, Sequence-01, State-01, ADR-007 & \code{GET /orders/:id} & API-T03, E2E-T01 \\ \hline
 FR-08 & US-07, UC-07 & Class-01 & \code{GET /orders} & API-T04 \\ \hline
 FR-09 & US-04, UC-04 & Class-01 & \code{POST /auth/register} & API-T05 \\ \hline
-FR-10 & US-04, UC-05 & Activity-01, Sequence-01 & \code{POST /auth/login} & API-T06, UNIT-T03 \\ \hline
+FR-10 & US-04, UC-05 & Activity-01, Sequence-01, C4-03 Auth, ADR-006 & \code{POST /auth/login} & API-T06, UNIT-T03 \\ \hline
 FR-11 & Mọi UC & Class-01 (Role) & Guard \code{/staff/*}, \code{/manager/*} & API-T07 \\ \hline
 FR-12 & US-10, UC-10 & Activity-01, State-01, Class-01 & \code{GET/PATCH /staff/orders} & API-T08, UNIT-T04 \\ \hline
 FR-13 & US-12, UC-12, UC-15 & Activity-01, State-01 & \code{POST /orders/:id/cancel} & INT-T07 \\ \hline
@@ -38,3 +38,26 @@ FR-18 $\rightarrow$ 20 & Could & Class-01 (một phần) & Chỉ khi thực hi�
 FR-21 $\rightarrow$ 24 & Won't & -- & Không có & Không áp dụng \\ \hline
 \end{longtable}
 }
+
+{\footnotesize
+\begin{longtable}{|p{1.5cm}|p{1.6cm}|p{4.8cm}|p{3.6cm}|p{2.5cm}|}
+\caption{Ma trận truy vết yêu cầu phi chức năng then chốt}\label{tab:trace-nfr}\\
+\hline
+\thead \textbf{Mã yêu cầu} & \textbf{Liên quan} & \textbf{Thiết kế / Sơ đồ} & \textbf{Code / Cấu hình} & \textbf{Test / Minh chứng} \\ \hline
+\endfirsthead
+\hline
+\thead \textbf{Mã yêu cầu} & \textbf{Liên quan} & \textbf{Thiết kế / Sơ đồ} & \textbf{Code / Cấu hình} & \textbf{Test / Minh chứng} \\ \hline
+\endhead
+NFR-04 & FR-10 & Sequence-01 (JwtAuthGuard), ADR-006 & Module auth & API-T06 \\ \hline
+NFR-05 & Mọi API & Sequence-01 (ValidationPipe) & ValidationPipe toàn cục & API-T01 $\rightarrow$ T10 \\ \hline
+NFR-07 & -- & Deployment-01 (HTTPS, DB không public), ADR-009 & Cấu hình Vercel, Render & Kiểm tra cấu hình \\ \hline
+NFR-11 & FR-01 & C4-02 Web App, ADR-003 & \code{apps/web} (Serwist) & Lighthouse PWA \\ \hline
+NFR-13 & FR-04, FR-05 & Sequence-01 (Transaction), ADR-002, ADR-004 & Service đơn hàng, thanh toán & INT-T06 \\ \hline
+NFR-14 & -- & Deployment-01 (health check), ADR-008 & \code{GET /health} & SMOKE-T01 \\ \hline
+NFR-16 & -- & Deployment-01 (\code{ci.yml}), ADR-001 & \code{.github/workflows/ci.yml} & Log CI \\ \hline
+NFR-17 & -- & Deployment-01 (\code{cd.yml}, GHCR), ADR-004, ADR-009 & \code{.github/workflows/cd.yml} & Log CD, SMOKE-T01 \\ \hline
+NFR-19 & -- & C4-03 Common, ADR-008 & \code{nestjs-pino} & Log production \\ \hline
+\end{longtable}
+}
+
+Truy vết từng node của Deployment-01 tới container C4 và mã nguồn: xem Bảng~\ref{tab:deploy-trace}.
