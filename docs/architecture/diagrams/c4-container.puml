@@ -1,0 +1,23 @@
+@startuml c4-container
+' C4-02 – Mức 2: Container của BrewLite (Task 3.1)
+' Mỗi container truy vết được tới thư mục mã nguồn và node trong Deployment-01
+!include <C4/C4_Container>
+LAYOUT_LEFT_RIGHT()
+title C4-02 – Container: BrewLite
+
+Person(customer, "Khách hàng", "Điện thoại, trình duyệt / PWA")
+Person(staff, "Nhân viên / Quản lý", "Tablet hoặc laptop tại quầy")
+
+System_Boundary(bl, "BrewLite") {
+  Container(web, "Web App", "Next.js (App Router), React, TypeScript, PWA (service worker)", "Giao diện mobile-first: menu, giỏ hàng, checkout, theo dõi đơn, màn nhân viên, quản lý. Mã: apps/web")
+  Container(api, "API", "NestJS, TypeScript, Prisma", "REST /api/v1: auth, catalog, cart pricing, orders, payments, staff, manager, health. Mã: apps/api")
+  Container(mock, "Payment Service (mô phỏng)", "NestJS module, HTTP", "POST /charges với Idempotency-Key; kết quả theo thẻ/ví test. Chạy cùng tiến trình API nhưng chỉ được gọi qua HTTP. Mã: apps/api/src/modules/payment-mock")
+  ContainerDb(db, "Database", "PostgreSQL 16", "Users, products, orders, payments, promotions, loyalty, idempotency. Schema quản lý bằng Prisma Migrate")
+}
+
+Rel(customer, web, "Dùng", "HTTPS")
+Rel(staff, web, "Dùng", "HTTPS")
+Rel(web, api, "Gọi API (JSON, Bearer JWT)", "HTTPS")
+Rel(api, db, "Đọc/ghi, transaction", "TCP 5432, mạng nội bộ")
+Rel(api, mock, "POST /charges", "HTTP/JSON, Idempotency-Key, timeout 10 s")
+@enduml
