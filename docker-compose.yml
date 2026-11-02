@@ -1,0 +1,48 @@
+# Chạy toàn bộ BrewLite ở local: cp .env.example .env && docker compose up --build
+# Web: http://localhost:3000 · API: http://localhost:4000/api/v1/products · Health: http://localhost:4000/health
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-brewlite}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-brewlite_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-brewlite}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-brewlite}:${POSTGRES_PASSWORD:-brewlite_dev}@db:5432/${POSTGRES_DB:-brewlite}?schema=public
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      SEED_ON_START: 'true'
+    ports:
+      - '4000:4000'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
