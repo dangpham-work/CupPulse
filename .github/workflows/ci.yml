@@ -1,0 +1,114 @@
+# CI (NFR-16, Task 4.4): mỗi pull request vào main chạy Install → Lint → Unit Test → Build.
+# Branch protection của main yêu cầu job "quality" và "integration" pass mới được merge.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Install → Lint → Unit Test → Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Chuẩn bị (build shared, prisma generate)
+        run: |
+          pnpm build:shared
+          pnpm --filter @brewlite/api prisma:generate
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+
+  integration:
+    name: Integration Test (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brewlite
+          POSTGRES_PASSWORD: brewlite_ci
+          POSTGRES_DB: brewlite
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brewlite"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://brewlite:brewlite_ci@localhost:5432/brewlite?schema=public
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared, prisma generate
+        run: |
+          pnpm build:shared
+          pnpm --filter @brewlite/api prisma:generate
+
+      - name: Migrate + seed (tái tạo DB từ đầu)
+        run: |
+          pnpm --filter @brewlite/api db:migrate
+          pnpm --filter @brewlite/api db:seed
+          pnpm --filter @brewlite/api db:seed
+
+      - name: Integration Test
+        run: pnpm --filter @brewlite/api test:int
+
+  docker:
+    name: Docker build (web, api)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image API
+        run: docker build -f apps/api/Dockerfile -t brewlite-api:ci .
+
+      - name: Build image Web
+        run: docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000 -t brewlite-web:ci .

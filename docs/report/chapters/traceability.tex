@@ -1,9 +1,9 @@
 % Ma trận truy vết – nguồn: docs/traceability-matrix.md
 \section{Ma trận truy vết}\label{sec:trace}
 
-Ma trận truy vết (\code{docs/traceability-matrix.md}, phiên bản 0.3 sau Task 3) liên kết mỗi yêu cầu với use-case/user
-story, sơ đồ thiết kế, API và test. Cột Code/API hiện là hợp đồng API từ SRS; cột Test là mã test dự kiến. Hai cột này
-được cập nhật thành đường dẫn mã nguồn và kết quả test thật ở Task 4--5.
+Ma trận truy vết (\code{docs/traceability-matrix.md}, phiên bản 0.4 sau Task 4) liên kết mỗi yêu cầu với use-case/user
+story, sơ đồ thiết kế, API và test. Dòng có dấu (*) đã hiện thực ở Sprint 1: cột Code/API trỏ tới mã nguồn, cột
+Test là test đang chạy trong CI. Các dòng khác là hợp đồng API từ SRS và mã test dự kiến, cập nhật ở Task 5.
 
 Quy ước mã test: \code{UNIT} unit test; \code{API} integration test một endpoint; \code{INT} integration test nhiều
 bước; \code{E2E} end-to-end; \code{SMOKE} smoke test sau triển khai.
@@ -17,8 +17,8 @@ bước; \code{E2E} end-to-end; \code{SMOKE} smoke test sau triển khai.
 \hline
 \thead \textbf{Mã yêu cầu} & \textbf{UC / User Story} & \textbf{Thiết kế / Sơ đồ} & \textbf{Code / API} & \textbf{Test} \\ \hline
 \endhead
-FR-01 & US-01 Xem menu, UC-02 & Activity-01, Class-01, C4-03 Catalog & \code{GET /products} & API-T01, E2E-T01 \\ \hline
-FR-02 & US-02, UC-02 & Activity-01, Class-01 & \code{GET /products/:id} & API-T02, UNIT-T01 \\ \hline
+FR-01 (*) & US-01 Xem menu, UC-02 & Activity-01, Class-01, C4-03 Catalog & \code{GET /products}; \code{catalog.controller.ts}, \code{MenuView.tsx} & API-T01, UNIT-T07, INT-T08, UI-T01 \\ \hline
+FR-02 (*) & US-02, UC-02 & Activity-01, Class-01 & \code{GET /products/:id}; \code{catalog.service.ts} & API-T02, INT-T08 \\ \hline
 FR-03 & US-03, UC-03 & Activity-01 & Giỏ hàng phía client & UNIT-T02, E2E-T01 \\ \hline
 FR-04 & US-05, UC-01 & Activity-01, Sequence-01, Class-01, State-01, C4-03 Orders, ADR-002 & \code{POST /orders} & INT-T01, INT-T02, INT-T06 \\ \hline
 FR-05 & US-05, UC-01 Thanh toán & Sequence-01, Class-01, State-01, C4-03 Payments, ADR-005 & \code{POST /payments} & INT-T03, INT-T04 \\ \hline
