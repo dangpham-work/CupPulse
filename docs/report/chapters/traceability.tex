@@ -1,0 +1,40 @@
+% Ma trận truy vết – nguồn: docs/traceability-matrix.md
+\section{Ma trận truy vết}\label{sec:trace}
+
+Ma trận truy vết (\code{docs/traceability-matrix.md}, phiên bản 0.2 sau Task 2) liên kết mỗi yêu cầu với use-case/user
+story, sơ đồ thiết kế, API và test. Cột Code/API hiện là hợp đồng API từ SRS; cột Test là mã test dự kiến. Hai cột này
+được cập nhật thành đường dẫn mã nguồn và kết quả test thật ở Task 4--5.
+
+Quy ước mã test: \code{UNIT} unit test; \code{API} integration test một endpoint; \code{INT} integration test nhiều
+bước; \code{E2E} end-to-end; \code{SMOKE} smoke test sau triển khai.
+
+{\footnotesize
+\begin{longtable}{|p{1.4cm}|p{2.6cm}|p{3.6cm}|p{3.9cm}|p{2.6cm}|}
+\caption{Ma trận truy vết yêu cầu chức năng}\label{tab:trace}\\
+\hline
+\thead \textbf{Mã yêu cầu} & \textbf{UC / User Story} & \textbf{Thiết kế / Sơ đồ} & \textbf{Code / API} & \textbf{Test} \\ \hline
+\endfirsthead
+\hline
+\thead \textbf{Mã yêu cầu} & \textbf{UC / User Story} & \textbf{Thiết kế / Sơ đồ} & \textbf{Code / API} & \textbf{Test} \\ \hline
+\endhead
+FR-01 & US-01 Xem menu, UC-02 & Activity-01, Class-01 & \code{GET /products} & API-T01, E2E-T01 \\ \hline
+FR-02 & US-02, UC-02 & Activity-01, Class-01 & \code{GET /products/:id} & API-T02, UNIT-T01 \\ \hline
+FR-03 & US-03, UC-03 & Activity-01 & Giỏ hàng phía client & UNIT-T02, E2E-T01 \\ \hline
+FR-04 & US-05, UC-01 & Activity-01, Sequence-01, Class-01, State-01 & \code{POST /orders} & INT-T01, INT-T02, INT-T06 \\ \hline
+FR-05 & US-05, UC-01 Thanh toán & Sequence-01, Class-01, State-01 & \code{POST /payments} & INT-T03, INT-T04 \\ \hline
+FR-06 & US-05, UC-01 & Sequence-01, Class-01 & \code{POST /payments} + \code{Idempotency-Key} & INT-T05 \\ \hline
+FR-07 & US-06, UC-06 & Activity-01, Sequence-01, State-01 & \code{GET /orders/:id} & API-T03, E2E-T01 \\ \hline
+FR-08 & US-07, UC-07 & Class-01 & \code{GET /orders} & API-T04 \\ \hline
+FR-09 & US-04, UC-04 & Class-01 & \code{POST /auth/register} & API-T05 \\ \hline
+FR-10 & US-04, UC-05 & Activity-01, Sequence-01 & \code{POST /auth/login} & API-T06, UNIT-T03 \\ \hline
+FR-11 & Mọi UC & Class-01 (Role) & Guard \code{/staff/*}, \code{/manager/*} & API-T07 \\ \hline
+FR-12 & US-10, UC-10 & Activity-01, State-01, Class-01 & \code{GET/PATCH /staff/orders} & API-T08, UNIT-T04 \\ \hline
+FR-13 & US-12, UC-12, UC-15 & Activity-01, State-01 & \code{POST /orders/:id/cancel} & INT-T07 \\ \hline
+FR-14 & US-08, UC-08 & Sequence-01, Class-01 & \code{POST /promotions/validate} & UNIT-T05 \\ \hline
+FR-15 & US-09, UC-09 & Sequence-01, Class-01 & \code{GET /me/loyalty} & INT-T03, UNIT-T06 \\ \hline
+FR-16 & US-11, UC-11 & Class-01 & \code{/manager/products} & API-T09 \\ \hline
+FR-17 & US-01, UC-02 & Activity-01 & \code{GET /products?q=} & API-T10 \\ \hline
+FR-18 $\rightarrow$ 20 & Could & Class-01 (một phần) & Chỉ khi thực hiện & Chỉ khi thực hiện \\ \hline
+FR-21 $\rightarrow$ 24 & Won't & -- & Không có & Không áp dụng \\ \hline
+\end{longtable}
+}

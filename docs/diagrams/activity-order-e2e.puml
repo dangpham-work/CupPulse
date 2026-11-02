@@ -1,0 +1,137 @@
+@startuml activity-order-e2e
+' Activity-01 – Luồng end-to-end: Xem menu → Chọn tùy chọn → Giỏ hàng → Đặt đơn → Thanh toán → Theo dõi đơn (Task 2.1)
+' Truy vết: FR-01 → FR-07, FR-10, FR-12, FR-13, FR-15; UC-01, UC-02, UC-03, UC-06, UC-10
+' Nhánh bắt buộc: hết hàng (2 chỗ), chưa đăng nhập, thanh toán thất bại / timeout
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ActivityBackgroundColor #FFF8EE
+skinparam ActivityBorderColor #7A4A1E
+skinparam ActivityDiamondBackgroundColor #FFE2B8
+skinparam ActivityDiamondBorderColor #7A4A1E
+skinparam SwimlaneTitleFontStyle bold
+title Activity-01 – Luồng đặt món end-to-end của BrewLite
+
+|#FFFFFF|Khách hàng|
+start
+:Mở BrewLite (PWA) trên điện thoại;
+
+|#FAFAFA|Next.js UI|
+:Gọi GET /products;
+if (Tải menu thành công?) then (có)
+  :Hiển thị menu theo danh mục\n(món hết hàng có nhãn "Hết hàng");
+else (lỗi / mất mạng)
+  :Hiển thị lỗi và nút "Thử lại";
+  |Khách hàng|
+  :Bấm "Thử lại";
+  |Next.js UI|
+  :Gọi lại GET /products và hiển thị menu;
+endif
+
+|Khách hàng|
+repeat
+  :Chọn một sản phẩm;
+  |Next.js UI|
+  :GET /products/:id, hiển thị size, topping, giá;
+  if (Sản phẩm còn hàng?) then (còn)
+    |Khách hàng|
+    :Chọn size, 0–3 topping, số lượng, ghi chú;
+    |Next.js UI|
+    :Tính giá theo BR-02, thêm vào giỏ\n(lưu trên thiết bị);
+  else (hết hàng)
+    :Vô hiệu nút "Thêm vào giỏ",\nhiện "Hết hàng";
+  endif
+  |Khách hàng|
+repeat while (Chọn thêm món?) is (có)
+->không;
+
+:Mở giỏ hàng, kiểm tra tạm tính,\nbấm "Đặt hàng";
+
+|Next.js UI|
+if (Đã đăng nhập và JWT còn hạn?) then (chưa)
+  :Chuyển tới /login?returnUrl=/checkout,\ngiữ nguyên giỏ hàng;
+  |Khách hàng|
+  :Đăng nhập (hoặc đăng ký);
+  |NestJS API|
+  :POST /auth/login → cấp JWT;
+  |Next.js UI|
+  :Quay lại /checkout;
+else (rồi)
+endif
+
+|Khách hàng|
+:Chọn phương thức Thẻ / Ví,\nnhập thông tin, (tùy chọn) mã khuyến mãi;
+:Bấm "Thanh toán";
+
+|Next.js UI|
+:Validate dữ liệu phía client;
+:POST /orders (JWT, items, expectedTotal);
+
+|NestJS API|
+:Kiểm tra JWT, validate body,\ntính lại giá từ database;
+:Mở transaction: kiểm tra và trừ tồn kho;
+if (Đủ tồn kho cho mọi món?) then (không – hết hàng)
+  :Rollback, trả 409 OUT_OF_STOCK;
+  |Next.js UI|
+  :Đánh dấu món hết hàng trong giỏ;
+  |Khách hàng|
+  :Sửa hoặc bỏ món trong giỏ;
+  end
+else (đủ)
+  |NestJS API|
+  :Tạo Order PENDING_PAYMENT\n(giữ kho 15 phút), commit;
+endif
+
+|Next.js UI|
+:Xóa giỏ hàng trên thiết bị;
+repeat
+  :Sinh / dùng lại Idempotency-Key,\nPOST /payments;
+  |NestJS API|
+  :Kiểm tra idempotency key và trạng thái đơn,\ntạo Payment PENDING;
+  |Payment Service|
+  :Xử lý giao dịch Thẻ / Ví;
+  |NestJS API|
+  switch (Kết quả từ Payment Service?)
+  case (SUCCEEDED)
+    :Lưu kết quả thành công;
+  case (FAILED)
+    :Payment FAILED, tăng số lần thất bại;
+    if (Đã thất bại 3 lần?) then (rồi)
+      :Order CANCELLED, hoàn lại tồn kho;
+    else (chưa)
+    endif
+  case (quá 10 giây)
+    :Giữ Payment PENDING, trả 202;
+  endswitch
+  |Next.js UI|
+  backward:Hiện lý do / "Đang xử lý";\nkhách thử lại hoặc đổi phương thức;
+repeat while (Cần gửi lại?\nFAILED < 3 lần → key mới\ntimeout → cùng key) is (có)
+->không;
+
+if (Đơn đã thanh toán?) then (không – hủy sau 3 lần)
+  :Thông báo thanh toán thất bại,\nđơn đã hủy, không bị trừ tiền;
+  |Khách hàng|
+  stop
+else (có)
+  |NestJS API|
+  :Transaction: Payment SUCCEEDED, Order PAID,\ntăng lượt dùng khuyến mãi, cộng điểm;
+  |Next.js UI|
+  :Hiển thị xác nhận: mã đơn, số gọi món, tổng tiền;
+endif
+
+fork
+  |Nhân viên quầy|
+  :Thấy đơn mới trên bảng đơn (≤ 5 giây);
+  :Chuyển PREPARING, pha chế;
+  :Chuyển READY;
+fork again
+  |Next.js UI|
+  :Theo dõi trạng thái đơn\n(PAID → PREPARING → READY);
+end fork
+
+|Khách hàng|
+:Nhận thông báo "Sẵn sàng", tới quầy nhận món;
+|Nhân viên quầy|
+:Giao món, chuyển COMPLETED;
+|Khách hàng|
+stop
+@enduml

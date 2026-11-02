@@ -9,6 +9,7 @@
 \usepackage{enumitem}
 \usepackage[table]{xcolor}
 \usepackage{graphicx}
+\usepackage{adjustbox}
 \usepackage{tabularx, caption}
 \usepackage{longtable}
 \usepackage{float}
@@ -112,10 +113,9 @@ KHOA CÔNG NGHỆ THÔNG TIN
 \begin{table}[h]
 \begin{tabular}{rrl}
 \hspace{5 cm} & GVHD: & Từ Lãng Phiêu\\
-& SV: & \todo{Họ tên SV1 - MSSV}\\
-& & \todo{Họ tên SV2 - MSSV}\\
-& & \todo{Họ tên SV3 - MSSV}\\
-& & \todo{Họ tên SV4 - MSSV}\\
+& SV: & Phạm Duy Đăng - 3124410068\\
+& Lớp: & DCT1245 - K24\\
+& Ngành: & Công nghệ Thông tin\\
 \end{tabular}
 \vspace{1.5 cm}
 \end{table}
@@ -128,18 +128,25 @@ KHOA CÔNG NGHỆ THÔNG TIN
 \thispagestyle{empty}
 \newpage
 
-\section*{Danh sách thành viên và phân công}
-\addcontentsline{toc}{section}{Danh sách thành viên và phân công}
+\section*{Thông tin sinh viên và phân công}
+\addcontentsline{toc}{section}{Thông tin sinh viên và phân công}
+
+Đề tài được thực hiện bởi một sinh viên, đảm nhận toàn bộ các vai trò của nhóm phát triển.
 
 \begin{center}
-\begin{tabularx}{\textwidth}{|c|l|l|X|c|}
+\begin{tabularx}{\textwidth}{|c|l|l|l|X|c|}
 \hline
-\thead \textbf{STT} & \textbf{Họ và tên} & \textbf{MSSV} & \textbf{Nhiệm vụ chính} & \textbf{Hoàn thành} \\ \hline
-1 & \todo{Họ tên} & \todo{MSSV} & \todo{Ví dụ: Product Owner, Task 1 -- Yêu cầu} & \todo{\%} \\ \hline
-2 & \todo{Họ tên} & \todo{MSSV} & \todo{Ví dụ: Backend NestJS, Task 2} & \todo{\%} \\ \hline
-3 & \todo{Họ tên} & \todo{MSSV} & \todo{Ví dụ: Frontend Next.js/PWA} & \todo{\%} \\ \hline
-4 & \todo{Họ tên} & \todo{MSSV} & \todo{Ví dụ: DevOps, CI/CD, triển khai} & \todo{\%} \\ \hline
+\thead \textbf{STT} & \textbf{Họ và tên} & \textbf{MSSV} & \textbf{Lớp} & \textbf{Vai trò / nhiệm vụ} & \textbf{Hoàn thành} \\ \hline
+1 & Phạm Duy Đăng & 3124410068 & DCT1245 & Product Owner, phân tích yêu cầu, thiết kế, Backend NestJS, Frontend Next.js/PWA, kiểm thử, DevOps (CI/CD, triển khai) & 100\% \\ \hline
 \end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tabular}{rl}
+Khóa -- Ngành: & K24 -- Công nghệ Thông tin \\
+Email liên hệ: & \href{mailto:duydang.contact@gmail.com}{\code{duydang.contact@gmail.com}} \\
+Repository: & \url{https://github.com/dangpham-work/CupPulse} \\
+\end{tabular}
 \end{center}
 
 \section*{Lịch sử phiên bản tài liệu}
@@ -149,7 +156,8 @@ KHOA CÔNG NGHỆ THÔNG TIN
 \begin{tabularx}{\textwidth}{|c|c|X|l|}
 \hline
 \thead \textbf{Phiên bản} & \textbf{Ngày} & \textbf{Nội dung thay đổi} & \textbf{Người thực hiện} \\ \hline
-1.0 & 01/11/2026 & Task 1 -- Khai thác và đặc tả yêu cầu (bối cảnh, stakeholder, phạm vi, SRS, use-case) & \todo{Tên} \\ \hline
+1.0 & 01/11/2026 & Task 1 -- Khai thác và đặc tả yêu cầu (bối cảnh, stakeholder, phạm vi, SRS, use-case) & Phạm Duy Đăng \\ \hline
+1.1 & 02/11/2026 & Task 2 -- Mô hình hóa hệ thống (activity, sequence, class, state diagram); ma trận truy vết v0.2 & Phạm Duy Đăng \\ \hline
 \end{tabularx}
 \end{center}
 
@@ -201,7 +209,7 @@ Công nghệ bắt buộc: \textbf{Next.js} (mobile-first/PWA) cho frontend, \te
 \hline
 \thead \textbf{Task} & \textbf{Giai đoạn} & \textbf{Tạo phẩm chính} & \textbf{Điểm} & \textbf{Trạng thái} \\ \hline
 1 & Khai thác và đặc tả yêu cầu & Stakeholder, phạm vi, SRS, use-case tổng quát, đặc tả use-case & 2 & Hoàn thành \\ \hline
-2 & Mô hình hóa hệ thống & Activity, sequence, class diagram & 2 & Chưa thực hiện \\ \hline
+2 & Mô hình hóa hệ thống & Activity, sequence, class diagram & 2 & Hoàn thành \\ \hline
 3 & Thiết kế kiến trúc & Kiến trúc, ADR, deployment diagram & 2 & Chưa thực hiện \\ \hline
 4 & Triển khai Sprint 1 & Repository, tài liệu, CI, MVP xem menu & 2 & Chưa thực hiện \\ \hline
 5 & Sprint 2, CI/CD, Delivery & MVP hoàn chỉnh, CD, production, kiểm thử, bàn giao & 2 & Chưa thực hiện \\ \hline
@@ -209,12 +217,12 @@ Công nghệ bắt buộc: \textbf{Next.js} (mobile-first/PWA) cho frontend, \te
 \end{table}
 
 \subsection{Kho mã nguồn và tài liệu}
-Toàn bộ tạo phẩm được quản lý phiên bản trong repository \todo{link GitHub}. Bảng dưới đây ánh xạ các phần của
+Toàn bộ tạo phẩm được quản lý phiên bản trong repository \url{https://github.com/dangpham-work/CupPulse}. Bảng dưới đây ánh xạ các phần của
 báo cáo tới tệp tương ứng trong repository.
 
 \begin{table}[H]
 \centering
-\caption{Ánh xạ báo cáo -- repository (Task 1)}
+\caption{Ánh xạ báo cáo -- repository}
 \begin{tabularx}{\textwidth}{|l|X|}
 \hline
 \thead \textbf{Phần báo cáo} & \textbf{Tệp trong repository} \\ \hline
@@ -223,6 +231,12 @@ Mục \ref{sec:srs} & \code{docs/requirements/srs.md} \\ \hline
 Mục \ref{sec:uc01} & \code{docs/requirements/use-case-checkout.md} \\ \hline
 Hình \ref{fig:uc-overview} & \code{docs/diagrams/usecase-overview.puml}, \code{.svg} \\ \hline
 Hình \ref{fig:uc-checkout} & \code{docs/diagrams/usecase-checkout.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:activity} & \code{docs/diagrams/activity-order-e2e.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:sequence} & \code{docs/diagrams/sequence-checkout.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:class} & \code{docs/diagrams/class-domain.puml}, \code{.svg} \\ \hline
+Hình \ref{fig:state} & \code{docs/diagrams/state-order-payment.puml}, \code{.svg} \\ \hline
+Mục \ref{sec:modeling} & \code{docs/diagrams/README.md} \\ \hline
+Mục \ref{sec:trace} & \code{docs/traceability-matrix.md} \\ \hline
 \end{tabularx}
 \end{table}
 
@@ -232,12 +246,9 @@ Hình \ref{fig:uc-checkout} & \code{docs/diagrams/usecase-checkout.puml}, \code{
 
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Task 2 -- Mô hình hóa hệ thống}
-\begin{notebox}
-Phần này sẽ được bổ sung khi thực hiện Task 2: activity diagram (có swimlane, các nhánh hết hàng, chưa đăng nhập,
-thanh toán thất bại), sequence diagram cho UC-01 và class diagram mức domain.
-\end{notebox}
+\input{chapters/task2-modeling}
 
+\newpage
 \section{Task 3 -- Thiết kế kiến trúc}
 \begin{notebox}
 Phần này sẽ được bổ sung khi thực hiện Task 3: kiến trúc C4/phân lớp, các ADR và UML deployment diagram cho môi
@@ -256,12 +267,7 @@ Phần này sẽ được bổ sung khi thực hiện Task 5: hoàn thiện MVP,
 triển khai production và bàn giao.
 \end{notebox}
 
-\section{Ma trận truy vết}
-\begin{notebox}
-Ma trận truy vết đầy đủ (\code{docs/traceability-matrix.md}) được hoàn thiện dần qua các task. Ở Task 1 đã có
-liên kết Yêu cầu $\leftrightarrow$ Use-case $\leftrightarrow$ User story (Bảng \ref{tab:usecases} và
-Bảng \ref{tab:userstories}).
-\end{notebox}
+\input{chapters/traceability}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{thebibliography}{9}

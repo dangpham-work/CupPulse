@@ -1,0 +1,143 @@
+@startuml sequence-checkout
+' Sequence-01 – UC-01 Đặt và thanh toán đơn hàng (Task 2.2)
+' Lifeline bắt buộc: Customer → Next.js UI → NestJS API → Database → Payment Service
+' Truy vết: FR-04, FR-05, FR-06, FR-15; BR-05, BR-07, BR-09 → BR-11, BR-14; NFR-04, NFR-05, NFR-13
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam ParticipantBackgroundColor #FFF8EE
+skinparam ParticipantBorderColor #7A4A1E
+skinparam ActorBorderColor #7A4A1E
+skinparam SequenceGroupBorderColor #7A4A1E
+skinparam SequenceGroupHeaderFontStyle bold
+skinparam BoxPadding 6
+title Sequence-01 – UC-01 Đặt và thanh toán đơn hàng
+autonumber "<b>[0]"
+
+actor "Customer" as C
+participant "Next.js UI\n(PWA)" as UI
+participant "NestJS API" as API
+database "Database\n(PostgreSQL)" as DB
+participant "Payment Service\n(mô phỏng)" as PAY
+
+== Giai đoạn 1 – Tạo đơn (FR-04) ==
+C -> UI : Bấm "Đặt hàng" trên giỏ
+UI -> API : POST /api/v1/orders\nAuthorization: Bearer <JWT>\n{ items[], promoCode?, expectedTotal }
+activate API
+
+API -> API : JwtAuthGuard: kiểm tra chữ ký, hạn JWT
+alt JWT thiếu / sai / hết hạn
+  API --> UI : 401 Unauthorized
+  UI --> C : Chuyển /login?returnUrl=/checkout (giữ giỏ)
+end
+API -> API : ValidationPipe: validate body\n(1–10 ly/dòng, ≤ 3 topping, size hợp lệ…)
+alt Body không hợp lệ
+  API --> UI : 400 Bad Request (lỗi từng trường)
+  UI --> C : Hiện lỗi tại ô nhập
+end
+
+API -> DB : SELECT products, sizes, toppings, promotion
+DB --> API : Dữ liệu giá hiện tại
+API -> API : PricingService.quote() theo BR-02, BR-04, BR-13
+alt Tổng ≠ expectedTotal
+  API --> UI : 409 PRICE_CHANGED { newTotal }
+  UI --> C : "Giá đã thay đổi, vui lòng kiểm tra lại"
+end
+
+group Transaction – tạo đơn và cập nhật tồn kho (BR-07, NFR-13)
+  API -> DB : BEGIN
+  loop mỗi sản phẩm trong đơn
+    API -> DB : UPDATE products SET stock = stock - :qty\nWHERE id = :id AND is_active AND stock >= :qty
+    DB --> API : số dòng bị ảnh hưởng
+  end
+  alt Có sản phẩm không đủ tồn kho (0 dòng)
+    API -> DB : ROLLBACK
+    API --> UI : 409 OUT_OF_STOCK { productIds }
+    UI --> C : Đánh dấu "Hết hàng" trong giỏ
+  else Đủ tồn kho
+    API -> DB : INSERT orders (PENDING_PAYMENT, expires_at = now + 15')\nINSERT order_items, order_item_toppings (snapshot giá)\nINSERT order_status_history
+    API -> DB : COMMIT
+  end
+end
+API --> UI : 201 Created { orderId, code, total, expiresAt }
+deactivate API
+UI -> UI : Xóa giỏ hàng, sinh Idempotency-Key = K1 (UUID v4)
+
+== Giai đoạn 2 – Thanh toán (FR-05, FR-06) ==
+C -> UI : Chọn Thẻ / Ví, nhập thông tin, bấm "Thanh toán"
+UI -> UI : Validate client (Luhn, hạn thẻ, CVV, SĐT)
+UI -> API : POST /api/v1/payments\nAuthorization: Bearer <JWT>\nIdempotency-Key: K1\n{ orderId, method, card | wallet }
+activate API
+API -> API : Kiểm tra JWT + validate body
+API -> DB : SELECT idempotency_records WHERE key = K1 AND user_id = :uid
+
+alt Đã có bản ghi K1 – client gửi lại yêu cầu (idempotency)
+  alt Cùng request_hash, đã có kết quả
+    DB --> API : response đã lưu
+    API --> UI : Trả lại đúng response cũ\n(không gọi Payment Service lần hai)
+  else Cùng request_hash, đang xử lý
+    API --> UI : 409 REQUEST_IN_PROGRESS (UI thử lại sau 2 giây)
+  else Cùng request_hash, AWAITING_GATEWAY (lần trước bị timeout)
+    API -> PAY : POST /charges  Idempotency-Key: K1 (gọi lại cùng khóa)
+    PAY --> API : Kết quả của giao dịch cũ (không tạo giao dịch mới)
+    note right of API : Ghi nhận như nhánh\n"thành công" / "thất bại" bên dưới
+  else Khác request_hash
+    API --> UI : 422 IDEMPOTENCY_KEY_REUSED
+  end
+else Chưa có bản ghi K1 – yêu cầu mới
+  API -> DB : INSERT idempotency_records (K1, request_hash, IN_PROGRESS)\n[UNIQUE(user_id, key) chặn 2 request đồng thời]
+  API -> DB : SELECT orders WHERE id = :orderId FOR UPDATE
+  DB --> API : order
+  alt Không phải chủ đơn / đơn không PENDING_PAYMENT / quá hạn
+    API --> UI : 404 / 409 ORDER_NOT_PAYABLE / 409 ORDER_ALREADY_PAID
+  end
+  API -> DB : INSERT payments (PENDING, amount = order.total, card_last4)
+  API -> PAY : POST /charges  Idempotency-Key: K1\n{ amount, currency: VND, method, source, reference }
+  activate PAY
+
+  alt Thanh toán thành công
+    PAY --> API : 200 { transactionId, status: SUCCEEDED }
+    deactivate PAY
+    group Transaction – ghi nhận thanh toán (BR-10, BR-13, BR-14)
+      API -> DB : BEGIN
+      API -> DB : UPDATE payments SET status = SUCCEEDED, transaction_id
+      API -> DB : UPDATE orders SET status = PAID, paid_at\nINSERT order_status_history (PENDING_PAYMENT → PAID)
+      API -> DB : UPDATE promotions SET used_count = used_count + 1 (nếu có)
+      API -> DB : INSERT loyalty_transactions (EARN, floor(total/10.000))\nUPDATE users SET loyalty_points += points
+      API -> DB : UPDATE idempotency_records SET response = 201…, status = DONE
+      API -> DB : COMMIT
+    end
+    API --> UI : 201 { paymentId, status: SUCCEEDED, orderStatus: PAID }
+    UI --> C : "Thanh toán thành công" – mã đơn, số gọi món, điểm tích được
+
+  else Thanh toán thất bại (CARD_DECLINED, INSUFFICIENT_FUNDS, WALLET_LOCKED)
+    PAY --> API : 200 { status: FAILED, failureCode }
+    group Transaction – ghi nhận thất bại (BR-09)
+      API -> DB : UPDATE payments SET status = FAILED, failure_code
+      API -> DB : UPDATE orders SET failed_payment_count += 1
+      opt failed_payment_count = 3
+        API -> DB : UPDATE orders SET status = CANCELLED\nUPDATE products SET stock = stock + qty (hoàn kho)
+      end
+      API -> DB : UPDATE idempotency_records SET response = 402…, status = DONE
+    end
+    API --> UI : 402 PAYMENT_FAILED { reason }
+    UI --> C : Hiện lý do bằng tiếng Việt,\nnút "Thử lại" (key mới K2) / "Đổi phương thức"
+
+  else Payment Service không phản hồi trong 10 giây
+    API -> API : Timeout – giữ payment PENDING
+    API -> DB : UPDATE idempotency_records SET status = AWAITING_GATEWAY
+    API --> UI : 202 { status: PENDING }
+    UI --> C : "Đang xử lý thanh toán…"
+    note over UI : Sau 3 giây UI gửi lại POST /payments\nvới cùng Idempotency-Key: K1 (tối đa 5 lần)\n→ vào nhánh "AWAITING_GATEWAY" ở trên
+  end
+end
+deactivate API
+
+== Giai đoạn 3 – Thông báo kết quả cuối cùng (FR-07) ==
+UI -> API : GET /api/v1/orders/:id (theo dõi trạng thái)
+API -> DB : SELECT order, items, status_history
+DB --> API : order
+API --> UI : 200 { status, statusHistory[] }
+UI --> C : Màn xác nhận và dòng thời gian trạng thái\n(PAID → PREPARING → READY → COMPLETED)
+@enduml

@@ -1,0 +1,38 @@
+@startuml state-order-payment
+' State-01 – Vòng đời Order và Payment (bổ trợ Task 2, đảm bảo nhất quán với BR-08 → BR-12)
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam state {
+  BackgroundColor #FFF8EE
+  BorderColor #7A4A1E
+}
+title State-01 – Vòng đời Order và Payment
+
+state "Order" as O {
+  [*] --> PENDING_PAYMENT : Khách tạo đơn\n(trừ kho, expiresAt = +15')
+  PENDING_PAYMENT --> PAID : Payment SUCCEEDED\n(cộng điểm, tăng lượt khuyến mãi)
+  PENDING_PAYMENT --> CANCELLED : Khách hủy (FR-13)\n/ quá 15 phút (BR-08)\n/ thất bại lần 3 (BR-09)\n[hoàn kho]
+  PAID --> PREPARING : Nhân viên nhận đơn
+  PREPARING --> READY : Pha chế xong
+  READY --> COMPLETED : Khách nhận món
+  COMPLETED --> [*]
+  CANCELLED --> [*]
+  note right of PAID
+    Không hủy được sau khi PAID
+    (không hoàn tiền – BR-12).
+    Chuyển sai luồng → 409 INVALID_TRANSITION.
+  end note
+}
+
+state "Payment (một lần thử)" as P {
+  [*] --> P_PENDING : POST /payments
+  state "PENDING" as P_PENDING
+  state "SUCCEEDED" as P_OK
+  state "FAILED" as P_FAIL
+  P_PENDING --> P_OK : Payment Service trả SUCCEEDED
+  P_PENDING --> P_FAIL : Payment Service trả FAILED
+  P_PENDING --> P_PENDING : Timeout 10 s\n(gửi lại cùng Idempotency-Key)
+  P_OK --> [*]
+  P_FAIL --> [*]
+}
+@enduml
