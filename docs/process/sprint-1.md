@@ -63,10 +63,20 @@ Job `docker` build image web và API (chưa push; push lên registry ở Sprint 
 
 ### Minh chứng
 
-| Lần chạy | Kết quả | Link |
-|---|---|---|
-| PR Sprint 1 | Pass | _(điền sau khi CI chạy)_ |
-| PR minh chứng lỗi lint | Fail ở bước Lint, PR bị chặn merge | _(điền sau khi CI chạy)_ |
+| Lần chạy | Commit | Kết quả | Link |
+|---|---|---|---|
+| PR #30 Sprint 1 – lần 1 | `96a0197` | **Cancelled**: commit mới được push nên workflow tự hủy lượt cũ (`concurrency`) | [run 41408066493](https://github.com/dangpham-work/CupPulse/actions/runs/41408066493) |
+| PR #30 Sprint 1 – lần 2 | `cd3f53d` | **Success**: quality 1m 0s, integration 43s, docker 1m 53s | [run 41408203576](https://github.com/dangpham-work/CupPulse/actions/runs/41408203576) · [PR #30](https://github.com/dangpham-work/CupPulse/pull/30) |
+| PR #31 minh chứng lỗi | `89d5753` | **Failure**: bước **Lint** báo `'unusedForCiDemo' is assigned a value but never used`; Typecheck, Unit Test, Build bị bỏ qua; job Docker cũng đỏ vì `next build` chạy ESLint | [run 41408237890](https://github.com/dangpham-work/CupPulse/actions/runs/41408237890) · [PR #31](https://github.com/dangpham-work/CupPulse/pull/31) (đã đóng, không merge) |
+
+Trích log job `Install → Lint → Unit Test → Build` của run 41408237890:
+
+```text
+apps/web lint:   27:7  error  'unusedForCiDemo' is assigned a value but never used  @typescript-eslint/no-unused-vars
+apps/web lint: ✖ 1 problem (1 error, 0 warnings)
+```
+
+**Sự cố phát hiện trong Sprint:** `.gitignore` mẫu Python có dòng `lib/` làm `apps/web/src/lib/api.ts` không được commit ở lần push đầu (máy local vẫn build được vì file có trên đĩa). Lỗi được phát hiện khi chuẩn bị nhánh minh chứng, trước khi lượt CI đầu chạy xong; đã sửa ở commit `cd3f53d` (giới hạn thành `/lib/`). Bài học: CI trên máy sạch là nơi kiểm chứng repository đầy đủ, nên luôn chờ CI xanh trước khi merge.
 
 ## 5. Sprint Review và Retrospective
 
