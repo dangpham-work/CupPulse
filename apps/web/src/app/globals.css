@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brew-50: #fff8ee;
+  --color-brew-100: #f6e7d2;
+  --color-brew-700: #7a4a1e;
+  --color-brew-900: #4a2c12;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Dải tab danh mục cuộn ngang bằng vuốt, không hiện thanh cuộn. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
