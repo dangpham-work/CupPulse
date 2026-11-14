@@ -93,6 +93,21 @@ pnpm dev:web
 
 CI chạy đúng các bước này trên mỗi pull request: **Install → Lint → Unit Test → Build**, cùng job integration test với PostgreSQL ([ci.yml](.github/workflows/ci.yml)).
 
+## Build và triển khai (CD)
+
+Build image API thủ công: `docker build -f apps/api/Dockerfile -t brewlite-api .` (web: `apps/web/Dockerfile` với `--build-arg NEXT_PUBLIC_API_URL=<url API>`).
+
+Khi push lên `main` hoặc tag `v*`, [cd.yml](.github/workflows/cd.yml) chạy:
+
+```text
+Lint + Test + Build → Docker image (:<commit sha>, :vX.Y.Z) → GHCR → Deploy (Render API, Vercel web) → Smoke test → (lỗi) Rollback
+```
+
+- Migration chạy khi container API khởi động (`prisma migrate deploy`); migration lỗi thì Render giữ bản cũ.
+- Secret (`RENDER_DEPLOY_HOOK_URL`, `VERCEL_*`) lưu ở GitHub Secrets, URL production ở GitHub Variables `API_URL`, `WEB_URL`.
+- **Rollback:** *Actions → CD → Run workflow*, nhập `image_sha` của bản tốt trước đó; workflow deploy lại image đó và chạy smoke test. Smoke test lỗi sau deploy thì pipeline tự rollback API.
+- Thiết lập lần đầu, biến môi trường, rollback thủ công và checklist nghiệm thu: [docs/deployment.md](docs/deployment.md).
+
 ## API Sprint 1
 
 | Method | Đường dẫn | Mô tả | Yêu cầu |
@@ -107,7 +122,7 @@ Lỗi trả về dạng `{ "statusCode", "code", "message", "details"? }` (SRS m
 
 Chiến lược branch, pull request, quy ước commit và Definition of Done: [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Triển khai production (Vercel + Render), CD và rollback: Sprint 2, sẽ mô tả trong `docs/deployment.md`.
+Triển khai production (Vercel + Render), CD và rollback: [docs/deployment.md](docs/deployment.md).
 
 ## Tác giả
 

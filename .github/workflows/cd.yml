@@ -1,0 +1,340 @@
+# CD (NFR-17, Task 5.3, ADR-009):
+#   Push main / tag v* → Lint + Test + Build → Docker image → GHCR → Deploy (Render API, Vercel web) → Smoke test → (lỗi) Rollback
+# Rollback thủ công: Actions → CD → Run workflow → nhập image_sha của bản tốt cũ (xem docs/deployment.md mục 7).
+#
+# Migration: container API tự chạy `prisma migrate deploy` khi khởi động (apps/api/docker-entrypoint.sh) vì
+# database production không public nên runner GitHub không kết nối được. Migration lỗi thì container mới không
+# lên, Render giữ bản cũ đang chạy. Migration theo kiểu expand → contract (ADR-004) để bản cũ vẫn chạy được trên schema mới.
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      image_sha:
+        description: 'Rollback: SHA (đủ 40 ký tự) của image đã có trên GHCR cần triển khai lại. Để trống = build và deploy commit hiện tại.'
+        required: false
+        default: ''
+        type: string
+      skip_deploy:
+        description: 'Chỉ build và push image, không deploy'
+        required: false
+        default: false
+        type: boolean
+
+# Không bao giờ chạy hai lượt deploy chồng nhau; lượt sau xếp hàng chờ lượt trước.
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: brewlite-api
+
+jobs:
+  quality:
+    name: Quality gate – Lint, Test, Build
+    if: ${{ inputs.image_sha == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Chuẩn bị (build shared, prisma generate)
+        run: |
+          pnpm build:shared
+          pnpm --filter @brewlite/api prisma:generate
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.API_URL || 'http://localhost:4000' }}
+
+  integration:
+    name: Integration Test (PostgreSQL)
+    if: ${{ inputs.image_sha == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brewlite
+          POSTGRES_PASSWORD: brewlite_ci
+          POSTGRES_DB: brewlite
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brewlite"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://brewlite:brewlite_ci@localhost:5432/brewlite?schema=public
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared, prisma generate
+        run: |
+          pnpm build:shared
+          pnpm --filter @brewlite/api prisma:generate
+
+      - name: Migrate + seed (tái tạo DB từ đầu)
+        run: |
+          pnpm --filter @brewlite/api db:migrate
+          pnpm --filter @brewlite/api db:seed
+
+      - name: Integration Test
+        run: pnpm --filter @brewlite/api test:int
+
+  image:
+    name: Docker image → GHCR
+    needs: [quality, integration]
+    if: ${{ inputs.image_sha == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.ref.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tên image (chữ thường)
+        id: ref
+        run: |
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "image=ghcr.io/${owner}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tag: luôn có :<commit sha> (bất biến, dùng để deploy/rollback); thêm :vX.Y.Z khi push tag v*.
+      - name: Metadata (tag)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.ref.outputs.image }}
+          tags: |
+            type=sha,format=long,prefix=
+            type=semver,pattern=v{{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build và push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy → Smoke test → Rollback
+    needs: [quality, integration, image]
+    # Chạy khi image build xong, hoặc khi rollback thủ công (image bị bỏ qua). Không chạy nếu job trước lỗi.
+    if: ${{ !cancelled() && !failure() && inputs.skip_deploy != true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.WEB_URL }}
+    permissions:
+      contents: read
+      deployments: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      IMAGE_SHA: ${{ inputs.image_sha || github.sha }}
+      API_URL: ${{ vars.API_URL }}
+      WEB_URL: ${{ vars.WEB_URL }}
+      IS_ROLLBACK: ${{ inputs.image_sha != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kiểm tra cấu hình production
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          missing=""
+          [ -n "$API_URL" ] || missing="$missing vars.API_URL"
+          [ -n "$WEB_URL" ] || missing="$missing vars.WEB_URL"
+          [ -n "$RENDER_DEPLOY_HOOK_URL" ] || missing="$missing secrets.RENDER_DEPLOY_HOOK_URL"
+          if [ "$IS_ROLLBACK" != "true" ]; then
+            [ -n "$VERCEL_TOKEN" ] || missing="$missing secrets.VERCEL_TOKEN"
+          fi
+          if [ -n "$missing" ]; then
+            echo "::error::Thiếu cấu hình:$missing (xem docs/deployment.md mục 3)"
+            exit 1
+          fi
+          case "$IMAGE_SHA" in
+            *[!0-9a-f]*|"") echo "::error::image_sha không hợp lệ"; exit 1 ;;
+          esac
+
+      # Bản đang chạy tốt gần nhất = deployment production gần nhất có trạng thái success và khác SHA hiện tại.
+      # Deployment chỉ được đánh dấu success khi cả job này (gồm smoke test) thành công.
+      - name: Tìm bản triển khai tốt trước đó (để rollback)
+        id: prev
+        run: |
+          prev=""
+          for row in $(gh api "repos/${GITHUB_REPOSITORY}/deployments?environment=production&per_page=50" \
+                         --jq '.[] | "\(.id):\(.sha)"'); do
+            id="${row%%:*}"; sha="${row##*:}"
+            [ "$sha" = "$IMAGE_SHA" ] && continue
+            state="$(gh api "repos/${GITHUB_REPOSITORY}/deployments/${id}/statuses" --jq '.[0].state // ""')"
+            if [ "$state" = "success" ]; then prev="$sha"; break; fi
+          done
+          echo "sha=${prev}" >> "$GITHUB_OUTPUT"
+          echo "Bản tốt trước đó: ${prev:-<không có>}"
+
+      - name: Tên image
+        id: ref
+        run: |
+          owner="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          echo "image=ghcr.io/${owner}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+
+      # Render kéo image :<sha> từ GHCR rồi chạy docker-entrypoint.sh: prisma migrate deploy → (seed) → server.
+      # Migration lỗi → container không lên → Render giữ bản cũ.
+      - name: Deploy API (Render deploy hook)
+        id: render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE: ${{ steps.ref.outputs.image }}
+        run: |
+          echo "::add-mask::${RENDER_DEPLOY_HOOK_URL}"
+          img="$(printf '%s' "${IMAGE}:${IMAGE_SHA}" | jq -sRr @uri)"
+          code="$(curl -sS -o response.json -w '%{http_code}' -X POST "${RENDER_DEPLOY_HOOK_URL}&imgURL=${img}")"
+          if [ "$code" -lt 200 ] || [ "$code" -ge 300 ]; then
+            echo "::error::Render deploy hook trả HTTP ${code}"
+            exit 1
+          fi
+          echo "deploy_id=$(jq -r '.deploy.id // empty' response.json)" >> "$GITHUB_OUTPUT"
+          rm -f response.json
+          echo "Đã yêu cầu Render triển khai ${IMAGE}:${IMAGE_SHA}"
+
+      # Tùy chọn: nếu có RENDER_API_KEY + vars.RENDER_SERVICE_ID thì chờ Render báo "live" trước khi smoke test,
+      # tránh nhầm bản cũ đang trả 200 là bản mới.
+      - name: Chờ Render hoàn tất (tùy chọn)
+        if: ${{ steps.render.outputs.deploy_id != '' }}
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
+          DEPLOY_ID: ${{ steps.render.outputs.deploy_id }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ] || [ -z "$RENDER_SERVICE_ID" ]; then
+            echo "Không có RENDER_API_KEY/RENDER_SERVICE_ID: chờ cố định 120 giây rồi smoke test."
+            sleep 120
+            exit 0
+          fi
+          for i in $(seq 1 60); do
+            status="$(curl -sS -H "Authorization: Bearer ${RENDER_API_KEY}" \
+              "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys/${DEPLOY_ID}" | jq -r '.status // "unknown"')"
+            echo "Render deploy: ${status} (${i}/60)"
+            case "$status" in
+              live) exit 0 ;;
+              build_failed|update_failed|canceled|deactivated|pre_deploy_failed)
+                echo "::error::Render deploy kết thúc với trạng thái ${status}"; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "::error::Quá thời gian chờ Render"; exit 1
+
+      - uses: pnpm/action-setup@v4
+        if: ${{ env.IS_ROLLBACK != 'true' }}
+
+      - uses: actions/setup-node@v4
+        if: ${{ env.IS_ROLLBACK != 'true' }}
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # Web (Vercel). Rollback thủ công chỉ đổi API; web tương thích ngược với API (xem docs/deployment.md).
+      - name: Deploy web (Vercel CLI)
+        if: ${{ env.IS_ROLLBACK != 'true' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm install --global vercel@39
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" > /dev/null
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          check() {
+            url="$1"; ok=""
+            for i in $(seq 1 30); do   # Render free ngủ sau 15 phút: tối đa ~10 phút
+              code="$(curl -sS -o /dev/null -m 20 -w '%{http_code}' "$url" || true)"
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              echo "  ${url} → ${code:-000} (lần ${i}/30)"
+              sleep 20
+            done
+            [ -n "$ok" ] && echo "OK   ${url}" || { echo "::error::Smoke test lỗi: ${url}"; return 1; }
+          }
+          check "${API_URL%/}/health"
+          check "${API_URL%/}/api/v1/products"
+          check "${WEB_URL%/}/"
+
+      - name: Rollback API về bản tốt trước đó
+        if: ${{ failure() && steps.smoke.conclusion == 'failure' }}
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE: ${{ steps.ref.outputs.image }}
+          PREV_SHA: ${{ steps.prev.outputs.sha }}
+        run: |
+          if [ -z "$PREV_SHA" ]; then
+            echo "::error::Smoke test lỗi và chưa có bản tốt trước đó để rollback. Xử lý thủ công theo docs/deployment.md mục 7."
+            exit 1
+          fi
+          echo "::add-mask::${RENDER_DEPLOY_HOOK_URL}"
+          img="$(printf '%s' "${IMAGE}:${PREV_SHA}" | jq -sRr @uri)"
+          code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "${RENDER_DEPLOY_HOOK_URL}&imgURL=${img}")"
+          echo "Đã gọi rollback về ${PREV_SHA} (HTTP ${code}). Pipeline vẫn đánh dấu THẤT BẠI."
+          sleep 120
+          curl -sS -o /dev/null -m 30 -w 'Health sau rollback: %{http_code}\n' "${API_URL%/}/health" || true
+          echo "::error::Triển khai ${IMAGE_SHA} thất bại smoke test; API đã được rollback về ${PREV_SHA}. Web (nếu đã deploy) cần kiểm tra thủ công."
+          exit 1
