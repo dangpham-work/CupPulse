@@ -75,3 +75,28 @@ export function validatePayment(input: Partial<PaymentInput>, now: Date = new Da
   if (input.method === 'WALLET') return validateWallet(input.wallet);
   return { method: 'Phương thức thanh toán không hợp lệ' };
 }
+
+/** Kết quả POST /payments: 201 SUCCEEDED hoặc 202 PENDING (AC-05.4, AC-05.7). Thất bại là 402 PAYMENT_FAILED (details.reason). */
+export interface PaymentResponse {
+  paymentId: string;
+  status: 'SUCCEEDED' | 'PENDING';
+  orderStatus: 'PENDING_PAYMENT' | 'PAID';
+}
+
+/** Lý do thất bại trả về ở details.reason của lỗi 402. */
+export type PaymentFailReason = 'CARD_DECLINED' | 'INSUFFICIENT_FUNDS' | 'WALLET_DECLINED';
+
+export const PAYMENT_FAIL_MESSAGES: Record<PaymentFailReason, string> = {
+  CARD_DECLINED: 'Thẻ bị từ chối. Vui lòng thử thẻ khác.',
+  INSUFFICIENT_FUNDS: 'Thẻ không đủ số dư.',
+  WALLET_DECLINED: 'Ví không đủ số dư hoặc bị từ chối.',
+};
+
+/** Thẻ/ví thử của gateway mô phỏng (docs/deployment.md, README). */
+export const TEST_CARDS = {
+  SUCCESS: '4242424242424242',
+  DECLINED: '4000000000000002',
+  INSUFFICIENT_FUNDS: '4000000000009995',
+  TIMEOUT: '4000000000000119',
+} as const;
+export const TEST_WALLETS = { SUCCESS: '0912345678', DECLINED: '0900000000', TIMEOUT: '0900000001' } as const;
