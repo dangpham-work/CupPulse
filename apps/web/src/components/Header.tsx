@@ -1,14 +1,26 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { CartCount } from './CartCount';
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+  /** Vai trò được thấy mục này; bỏ trống = mọi người (AC-11.4). Server vẫn chặn truy cập trực tiếp. */
+  roles?: string[];
+}
+
+const NAV: NavItem[] = [
   { href: '/', label: 'Thực đơn' },
-  { href: '/orders', label: 'Đơn hàng của tôi' },
-  { href: '/#uu-dai', label: 'Ưu đãi' },
-] as const;
+  { href: '/orders', label: 'Đơn hàng của tôi', roles: ['CUSTOMER', 'STAFF', 'MANAGER'] },
+  { href: '/staff', label: 'Quầy', roles: ['STAFF', 'MANAGER'] },
+];
 
 /** Header dùng chung (Figma: component Header, trạng thái Guest). Mobile: ẩn nav, chỉ giữ logo + giỏ + đăng nhập. */
 export function Header({ active = '/' }: { active?: string }) {
+  const { user, logout } = useAuth();
+  const items = NAV.filter((item) => !item.roles || (user && item.roles.includes(user.role)));
   return (
     <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-line bg-white px-4 md:px-10 lg:px-20">
       <Link href="/" className="flex items-center gap-2.5" aria-label="Brew House – trang chủ">
@@ -17,7 +29,7 @@ export function Header({ active = '/' }: { active?: string }) {
       </Link>
 
       <nav aria-label="Điều hướng chính" className="hidden items-center gap-8 text-[15px] md:flex">
-        {NAV.map((item) => (
+        {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -38,9 +50,18 @@ export function Header({ active = '/' }: { active?: string }) {
           <span className="hidden sm:inline">Giỏ hàng</span>
           <CartCount />
         </Link>
-        <Link href="/login" className="flex min-h-11 items-center rounded-[10px] bg-brand px-[18px] text-sm font-semibold text-white">
-          Đăng nhập
-        </Link>
+        {user ? (
+          <>
+            <span className="hidden max-w-[140px] truncate text-sm font-medium text-ink lg:inline">{user.fullName}</span>
+            <button type="button" onClick={logout} className="flex min-h-11 items-center rounded-[10px] border border-line px-[18px] text-sm font-semibold text-brand">
+              Đăng xuất
+            </button>
+          </>
+        ) : (
+          <Link href="/login" className="flex min-h-11 items-center rounded-[10px] bg-brand px-[18px] text-sm font-semibold text-white">
+            Đăng nhập
+          </Link>
+        )}
       </div>
     </header>
   );
