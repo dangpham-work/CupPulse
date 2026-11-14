@@ -1,14 +1,14 @@
+import { Header } from '@/components/Header';
 import { MenuView } from '@/features/menu/MenuView';
 
-/** Trang chủ = menu (SRS mục 9, route "/"). */
+/** Trang chủ = menu (SRS mục 9, route "/"). Figma: 01 — Thực đơn (Menu). */
 export default function HomePage() {
   return (
-    <main className="mx-auto max-w-5xl">
-      <header className="sticky top-0 z-10 bg-stone-50/95 px-4 pb-3 pt-5 backdrop-blur">
-        <p className="text-sm font-medium text-brew-700">BrewLite</p>
-        <h1 className="text-2xl font-bold">Hôm nay uống gì?</h1>
-      </header>
-      <MenuView />
-    </main>
+    <>
+      <Header active="/" />
+      <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-12 lg:px-20">
+        <MenuView />
+      </main>
+    </>
   );
 }
