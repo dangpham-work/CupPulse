@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro } from 'next/font/google';
 import type { ReactNode } from 'react';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="vi" className={beVietnamPro.variable}>
       <body className="min-h-dvh bg-cream font-sans text-ink antialiased">
         <Providers>{children}</Providers>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

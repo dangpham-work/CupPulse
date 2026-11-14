@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-/** Web App Manifest để cài BrewLite như ứng dụng (NFR-11, ADR-003). Service worker bổ sung ở Sprint 2. */
+/** Web App Manifest để cài BrewLite như ứng dụng (NFR-11, ADR-003). Service worker: public/sw.js. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'BrewLite – Đặt cà phê',
