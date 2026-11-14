@@ -2,7 +2,8 @@
  * Seed dữ liệu mẫu cho menu (Task 4.3). Chạy lại nhiều lần vẫn cho cùng kết quả:
  * mọi bản ghi có id cố định và được upsert.
  */
-import { PrismaClient, SizeCode } from '@prisma/client';
+import { PrismaClient, Role, SizeCode } from '@prisma/client';
+import { hashSync } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -55,6 +56,14 @@ const products: SeedProduct[] = [
   { n: 13, name: 'Trà vải (ngừng bán)', description: 'Món theo mùa, đã ẩn khỏi menu.', category: 'tra', image: 'tea', basePrice: 45000, stock: 10, isActive: false, toppings: [1] },
 ];
 
+/** Tài khoản demo (staff/manager/khách). Mật khẩu lấy từ SEED_DEMO_PASSWORD, mặc định chỉ dùng cho local/demo. */
+const demoPassword = process.env.SEED_DEMO_PASSWORD ?? 'Brewlite123';
+const users = [
+  { id: '3e9a7d1b-0000-4000-8000-000000000001', email: 'khach@brewlite.test', fullName: 'Khách Demo', role: Role.CUSTOMER },
+  { id: '3e9a7d1b-0000-4000-8000-000000000002', email: 'nhanvien@brewlite.test', fullName: 'Nhân Viên Quầy', role: Role.STAFF },
+  { id: '3e9a7d1b-0000-4000-8000-000000000003', email: 'quanly@brewlite.test', fullName: 'Quản Lý Cửa Hàng', role: Role.MANAGER },
+];
+
 const productId = (n: number) => `2d8f6c0a-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const toppingId = (n: number) => toppings[n - 1].id;
 
@@ -86,7 +95,15 @@ async function main(): Promise<void> {
       data: (p.toppings ?? []).map((t) => ({ productId: id, toppingId: toppingId(t) })),
     });
   }
-  console.log(`Seed xong: ${categories.length} danh mục, ${products.length} sản phẩm, ${toppings.length} topping.`);
+  const passwordHash = hashSync(demoPassword, 12);
+  for (const u of users) {
+    await prisma.user.upsert({
+      where: { id: u.id },
+      update: { fullName: u.fullName, role: u.role },
+      create: { ...u, passwordHash },
+    });
+  }
+  console.log(`Seed xong: ${categories.length} danh mục, ${products.length} sản phẩm, ${toppings.length} topping, ${users.length} tài khoản demo.`);
 }
 
 main()
