@@ -197,21 +197,44 @@ function splitRow(line) {
 }
 
 // ---------------------------------------------------------------- Hình
-function pngSize(file) {
+// Kích thước ảnh PNG (IHDR) hoặc JPEG (marker SOFn).
+function imageSize(file) {
   const buf = fs.readFileSync(file);
-  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), data: buf };
+  if (/\.jpe?g$/i.test(file)) {
+    let p = 2;
+    while (p < buf.length) {
+      const marker = buf[p + 1];
+      const len = buf.readUInt16BE(p + 2);
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
+        return { type: "jpg", height: buf.readUInt16BE(p + 5), width: buf.readUInt16BE(p + 7), data: buf };
+      }
+      p += 2 + len;
+    }
+    throw new Error(`Không đọc được kích thước JPEG: ${file}`);
+  }
+  return { type: "png", width: buf.readUInt32BE(16), height: buf.readUInt32BE(20), data: buf };
 }
 
-function figure(file, caption, { maxH = MAX_IMG_H } = {}) {
-  const { width, height, data } = pngSize(file);
-  const scale = Math.min(MAX_IMG_W / width, maxH / height);
+function imageRun(file, maxW, maxH) {
+  const { type, width, height, data } = imageSize(file);
+  const scale = Math.min(maxW / width, maxH / height);
+  return new ImageRun({ type, data, transformation: { width: Math.round(width * scale), height: Math.round(height * scale) } });
+}
+
+function figure(file, caption, { maxH = MAX_IMG_H, maxW = MAX_IMG_W } = {}) {
+  return figureRow([file], caption, { maxH, maxW });
+}
+
+// Một hoặc nhiều ảnh đặt cạnh nhau, chung một chú thích.
+function figureRow(files, caption, { maxH = MAX_IMG_H, maxW = MAX_IMG_W, gap = "        " } = {}) {
   figureNo += 1;
+  const runs = files.flatMap((f, k) => (k ? [new TextRun(gap), imageRun(f, maxW, maxH)] : [imageRun(f, maxW, maxH)]));
   return [
     new Paragraph({
       alignment: AlignmentType.CENTER,
       keepNext: true,
       spacing: { before: 120, after: 60 },
-      children: [new ImageRun({ type: "png", data, transformation: { width: Math.round(width * scale), height: Math.round(height * scale) } })],
+      children: runs,
     }),
     new Paragraph({
       style: "Caption",
@@ -466,6 +489,7 @@ const frontMatter = [
       ["1.0", "01/11/2026", "Task 1 – Khai thác và đặc tả yêu cầu (bối cảnh, stakeholder, phạm vi, SRS, use-case)", "Phạm Duy Đăng"],
       ["1.1", "02/11/2026", "Task 2 – Mô hình hóa hệ thống (activity, sequence, class, state diagram); ma trận truy vết v0.2", "Phạm Duy Đăng"],
       ["1.2", "02/11/2026", "Task 3 – Thiết kế kiến trúc (C4, 9 ADR, deployment diagram); ma trận truy vết v0.3", "Phạm Duy Đăng"],
+      ["1.3", "02/11/2026", "Task 4 – Sprint 1 (repository, CI, MVP xem menu, Product Backlog); ma trận truy vết v0.4", "Phạm Duy Đăng"],
     ],
     { widths: [0.12, 0.15, 0.53, 0.2] },
   ),
@@ -497,7 +521,7 @@ const chapter1 = [
       ["1", "Khai thác và đặc tả yêu cầu", "Stakeholder, phạm vi, SRS, use-case tổng quát, đặc tả use-case", "2", "Hoàn thành"],
       ["2", "Mô hình hóa hệ thống", "Activity, sequence, class diagram", "2", "Hoàn thành"],
       ["3", "Thiết kế kiến trúc", "Kiến trúc, ADR, deployment diagram", "2", "Hoàn thành"],
-      ["4", "Triển khai Sprint 1", "Repository, tài liệu, CI, MVP xem menu", "2", "Chưa thực hiện"],
+      ["4", "Triển khai Sprint 1", "Repository, tài liệu, CI, MVP xem menu", "2", "Hoàn thành"],
       ["5", "Sprint 2, CI/CD, Delivery", "MVP hoàn chỉnh, CD, production, kiểm thử, bàn giao", "2", "Chưa thực hiện"],
     ],
     { widths: [0.07, 0.25, 0.4, 0.08, 0.2] },
@@ -514,6 +538,7 @@ const chapter1 = [
       ["Mục 4.1", "`docs/architecture/architecture.md`, `docs/architecture/diagrams/c4-*.puml`, `.svg`"],
       ["Mục 4.2", "`docs/architecture/adr/001-*.md` → `009-*.md`"],
       ["Mục 4.3", "`docs/architecture/deployment-view.md`, `docs/architecture/diagrams/deployment.puml`, `.svg`"],
+      ["Chương 5", "`docs/process/sprint-1.md`, `docs/process/product-backlog.md`, `.github/workflows/ci.yml`, `apps/web`, `apps/api`"],
       ["Chương 7", "`docs/traceability-matrix.md`"],
     ],
     { widths: [0.3, 0.7] },
@@ -602,8 +627,65 @@ const chapter4 = [
   ...markdown(arch("deployment-view.md"), { skipTitle: true, shift: 1 }),
 ];
 
+// ---------------------------------------------------------------- Chương 5 – Task 4
+const proc = (f) => path.join(DOCS_DIR, "process", f);
+const chapter5 = [
+  heading("Task 4 – Triển khai Sprint 1", 1, { pageBreak: true }),
+  para(
+    "**Sprint Goal:** có repository, tài liệu có kiểm soát phiên bản, CI tự động trên pull request và MVP xem menu chạy được (API, màn hình, dữ liệu seed). Sprint kéo dài 2 tuần (02/11 – 15/11/2026), gồm 9 mục backlog PB-01 → PB-09 (22 điểm). Chi tiết: `docs/process/sprint-1.md`.",
+  ),
+  ...markdown(proc("sprint-1.md"), {
+    skipTitle: true,
+    shift: 0,
+    skipSections: [/Sprint Review/],
+    rename: { "^Kiểm thử$": "Kiểm thử Sprint 1", "^Minh chứng$": "Minh chứng pipeline" },
+    after: {
+      "^Task 4.1": () => [
+        para(`Repository GitHub [${REPO}](${REPO}) tổ chức theo monorepo pnpm (ADR-001):`),
+        ...[
+          "apps/web/            Next.js 15 mobile-first/PWA",
+          "apps/api/            NestJS 11: src/modules/<domain>, prisma/, test/",
+          "packages/shared/     Kiểu dữ liệu và hàm dùng chung web <-> API",
+          "docs/                requirements/, diagrams/, architecture/, process/",
+          "tests/               Integration/E2E xuyên ứng dụng (Sprint 2)",
+          ".github/workflows/   ci.yml",
+          "docker-compose.yml   .env.example   README.md   CONTRIBUTING.md",
+        ].map(
+          (c) =>
+            new Paragraph({
+              shading: { type: ShadingType.CLEAR, color: "auto", fill: "F4F4F4" },
+              spacing: { before: 0, after: 0 },
+              indent: { left: 284 },
+              children: [new TextRun({ text: c, font: MONO, size: 19 })],
+            }),
+        ),
+        new Paragraph({ children: [] }),
+      ],
+    },
+    before: {
+      "Task 4\.2": () => [
+        para(
+          "**Definition of Done** (tóm tắt): đạt tiêu chí chấp nhận trong SRS; có test tự động; lint, typecheck, test, build pass và CI xanh; validate đầu vào ở backend; dùng tốt ở 360 px; không lộ secret; cập nhật ma trận truy vết và tài liệu; merge qua PR.",
+        ),
+      ],
+      "^Kiểm thử": () =>
+        figureRow(
+          [fig("menu-mobile.jpg"), fig("menu-error.jpg")],
+          "Màn menu ở chiều rộng mobile: dữ liệu từ API (trái) và trạng thái lỗi khi API không phản hồi (phải)",
+          { maxW: 220, maxH: 470 },
+        ),
+      "Task 4\.4": () => [
+        para(
+          "Test được viết trước phần hiện thực. Để chắc test thật sự kiểm tra hành vi, nhóm cố ý làm sai logic (đổi `stock > 0` thành `stock >= 0`, đổi nhãn \"Hết hàng\") và xác nhận test tương ứng chuyển sang thất bại.",
+        ),
+      ],
+    },
+  }),
+  ...figure(fig("ci-pass.png"), "CI của PR #30 thành công: ba job xanh"),
+  ...figure(fig("ci-fail.png"), "CI của PR #31 phát hiện lỗi lint: job chất lượng và job Docker đỏ"),
+];
+
 const laterChapters = [
-  ...placeholder("Task 4 – Triển khai Sprint 1", "Phần này sẽ được bổ sung khi thực hiện Task 4: thiết lập repository, quản lý tài liệu, MVP xem menu và Continuous Integration."),
   ...placeholder(
     "Task 5 – Triển khai Sprint 2, CI/CD và Delivery",
     "Phần này sẽ được bổ sung khi thực hiện Task 5: hoàn thiện MVP, kiểm thử, Continuous Delivery/Deployment, triển khai production và bàn giao.",
@@ -694,7 +776,7 @@ const doc = new Document({
       properties: { page: { size: PAGE, margin: MARGIN } },
       headers: { default: header },
       footers: { default: footer },
-      children: [...frontMatter, ...chapter1, ...chapter2, ...chapter3, ...chapter4, ...laterChapters, ...references],
+      children: [...frontMatter, ...chapter1, ...chapter2, ...chapter3, ...chapter4, ...chapter5, ...laterChapters, ...references],
     },
   ],
 });

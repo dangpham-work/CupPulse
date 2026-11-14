@@ -4,10 +4,11 @@
 
 | Chương | Nguồn |
 |---|---|
-| Bìa, thông tin sinh viên, lịch sử phiên bản, Chương 1, Chương 5–6, tài liệu tham khảo | `build-docx.js` |
+| Bìa, thông tin sinh viên, lịch sử phiên bản, Chương 1, khung Chương 6, tài liệu tham khảo | `build-docx.js` |
 | Chương 2 – Task 1 | `docs/requirements/context-and-scope.md`, `srs.md`, `use-case-checkout.md` |
 | Chương 3 – Task 2 | `docs/diagrams/README.md` + hình trong `docs/report/figures/` |
 | Chương 4 – Task 3 | `docs/architecture/architecture.md`, `adr/README.md`, `adr/0xx-*.md`, `deployment-view.md` |
+| Chương 5 – Task 4 | `docs/process/sprint-1.md` (bổ sung cây thư mục, DoD, hình menu và CI từ `docs/report/figures`) |
 | Chương 7 – Ma trận truy vết | `docs/traceability-matrix.md` |
 
 ## Sinh lại
