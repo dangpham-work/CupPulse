@@ -2,8 +2,8 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Phiên bản | 0.3 (sau Task 3) |
-| Trạng thái | Cột **Code/API** là hợp đồng API từ SRS mục 8; cột **Test** là mã test **dự kiến**. Hai cột này được cập nhật thành đường dẫn mã nguồn và kết quả test thật ở Task 4–5. |
+| Phiên bản | 0.4 (sau Task 4 – Sprint 1) |
+| Trạng thái | Dòng có ✅ đã hiện thực ở Sprint 1: cột **Code/API** trỏ tới mã nguồn, cột **Test** trỏ tới tệp test đang chạy trong CI. Các dòng khác vẫn là hợp đồng API từ SRS mục 8 và mã test **dự kiến**, cập nhật ở Task 5. |
 
 **Quy ước mã test:** `UNIT-Txx` unit test · `API-Txx` integration test cho một endpoint · `INT-Txx` integration test nhiều bước (đặt đơn, thanh toán) · `E2E-Txx` end-to-end (Playwright) · `SMOKE-Txx` smoke test sau triển khai.
 
@@ -13,8 +13,8 @@
 
 | Mã yêu cầu | Use-case / User Story | Thiết kế / Sơ đồ | Code / API | Test |
 |---|---|---|---|---|
-| FR-01 | US-01 Xem menu · UC-02 | Activity-01, Class-01 (Product, Category), C4-03 CatalogModule | `GET /products` | API-T01, E2E-T01 |
-| FR-02 | US-02 · UC-02 | Activity-01, Class-01 (Product, ProductSize, Topping) | `GET /products/:id` | API-T02, UNIT-T01 (tính giá) |
+| FR-01 ✅ | US-01 Xem menu · UC-02 · PB-04, PB-05 | Activity-01, Class-01 (Product, Category), C4-03 CatalogModule | `GET /products` → `apps/api/src/modules/catalog/catalog.controller.ts`; màn menu `apps/web/src/features/menu/MenuView.tsx` | API-T01, UNIT-T07 (`apps/api/test/products.api-spec.ts`, `catalog.service.spec.ts`), INT-T08 (`apps/api/test/catalog.int-spec.ts`), UI-T01 (`apps/web/src/features/menu/MenuView.test.tsx`); E2E-T01 ở Sprint 2 |
+| FR-02 ✅ (API) | US-02 · UC-02 · PB-04 (API), PB-10 (giao diện) | Activity-01, Class-01 (Product, ProductSize, Topping) | `GET /products/:id` → `catalog.controller.ts`, `catalog.service.ts`; giao diện chi tiết ở Sprint 2 | API-T02 (`products.api-spec.ts`), INT-T08; UNIT-T01 (tính giá) ở Sprint 2 |
 | FR-03 | US-03 · UC-03 | Activity-01 | Giỏ hàng phía client (`apps/web`) | UNIT-T02, E2E-T01 |
 | FR-04 | US-05 · UC-01 | Activity-01, Sequence-01 (giai đoạn 1), Class-01 (Order, OrderItem), State-01, C4-03 OrdersModule, ADR-002 | `POST /orders` | INT-T01, INT-T02 (hết hàng), INT-T06 (đồng thời) |
 | FR-05 | US-05 · UC-01 Thanh toán | Sequence-01 (giai đoạn 2), Class-01 (Payment), State-01, C4-03 PaymentsModule + PaymentMockModule, ADR-005 | `POST /payments` | INT-T03 (thành công), INT-T04 (thất bại, 3 lần) |
@@ -40,14 +40,15 @@
 | Mã yêu cầu | Liên quan | Thiết kế / Sơ đồ | Code / Cấu hình | Test / Minh chứng |
 |---|---|---|---|---|
 | NFR-04 | FR-10 | Sequence-01 (JwtAuthGuard), ADR-006 | Module auth | API-T06 |
-| NFR-05 | Mọi API | Sequence-01 (ValidationPipe) | ValidationPipe toàn cục | API-T01 → API-T10 (ca dữ liệu sai) |
+| NFR-05 ✅ | Mọi API | Sequence-01 (ValidationPipe) | `apps/api/src/app.setup.ts` (ValidationPipe whitelist), `common/http-exception.filter.ts` | API-T01, API-T02 (query lạ, id sai → 400) |
 | NFR-13 | FR-04, FR-05 | Sequence-01 (2 khối Transaction), ADR-002, ADR-004 | Service đơn hàng, thanh toán | INT-T06 |
-| NFR-14 | — | Deployment-01 (Render health check), ADR-008 | `GET /health` | SMOKE-T01 |
-| NFR-16 | — | Deployment-01 (GitHub Actions ci.yml), ADR-001 | `.github/workflows/ci.yml` | Log CI pass / fail |
+| NFR-14 ✅ | — | Deployment-01 (Render health check), ADR-008 | `GET /health` → `apps/api/src/modules/health/health.controller.ts` | `products.api-spec.ts` (200/503), INT-T08; SMOKE-T01 sau deploy ở Sprint 2 |
+| NFR-16 ✅ | — | Deployment-01 (GitHub Actions ci.yml), ADR-001 | `.github/workflows/ci.yml` | Log CI pass / fail: [docs/process/sprint-1.md](process/sprint-1.md) mục 4 |
 | NFR-17 | — | Deployment-01 (cd.yml, GHCR, deploy hook), ADR-004, ADR-009 | `.github/workflows/cd.yml` | Log CD, SMOKE-T01 |
 | NFR-07 | — | Deployment-01 (HTTPS, DB external access tắt), ADR-009 | Cấu hình Vercel, Render | Kiểm tra URL, cấu hình |
 | NFR-11 | FR-01 | C4-02 Web App, ADR-003 | `apps/web` (Serwist) | Lighthouse PWA |
-| NFR-19 | — | C4-03 Common, ADR-008 | `nestjs-pino`, `HttpExceptionFilter` | Kiểm tra log production |
+| NFR-19 | — | C4-03 Common, ADR-008 | `nestjs-pino` (Sprint 2), `HttpExceptionFilter` | Kiểm tra log production |
+| NFR-15 ✅ (local) | — | Deployment-01 (Docker Engine local) | `docker-compose.yml`, `apps/api/Dockerfile`, `apps/web/Dockerfile`, `apps/api/prisma/migrations/`, `prisma/seed.ts` | CI job Integration Test (migrate + seed từ DB trống) |
 
 ## Thành phần triển khai
 
