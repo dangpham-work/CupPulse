@@ -100,6 +100,78 @@ jobs:
       - name: Integration Test
         run: pnpm --filter @brewlite/api test:int
 
+  e2e:
+    name: E2E (Playwright, web + API + PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: brewlite
+          POSTGRES_PASSWORD: brewlite_ci
+          POSTGRES_DB: brewlite
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brewlite"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://brewlite:brewlite_ci@localhost:5432/brewlite?schema=public
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      CORS_ORIGIN: http://localhost:3000
+      E2E_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared, prisma generate, build API và web
+        run: |
+          pnpm build:shared
+          pnpm --filter @brewlite/api prisma:generate
+          pnpm --filter @brewlite/api build
+          pnpm --filter @brewlite/web build
+
+      - name: Migrate + seed
+        run: |
+          pnpm --filter @brewlite/api db:migrate
+          pnpm --filter @brewlite/api db:seed
+
+      - name: Khởi động API và web
+        run: |
+          (cd apps/api && PORT=4000 node dist/main.js > ../../api.log 2>&1 &)
+          (cd apps/web && PORT=3000 pnpm start > ../../web.log 2>&1 &)
+          npx --yes wait-on@8.0.1 -t 90000 http://localhost:4000/health http://localhost:3000
+
+      - name: Cài trình duyệt Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E
+        run: pnpm test:e2e
+
+      - name: Lưu báo cáo khi lỗi
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            playwright-report
+            test-results
+            api.log
+            web.log
+          if-no-files-found: ignore
+
   docker:
     name: Docker build (web, api)
     runs-on: ubuntu-latest
