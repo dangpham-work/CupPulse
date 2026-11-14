@@ -1,4 +1,4 @@
-import type { ApiError, ProductSummary } from '@brewlite/shared';
+import type { ApiError, ProductDetail, ProductSummary } from '@brewlite/shared';
 
 /** Địa chỉ API, ví dụ http://localhost:4000 (local) hoặc https://brewlite-api.onrender.com (production). */
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000').replace(/\/$/, '');
@@ -26,4 +26,9 @@ async function getJson<T>(path: string): Promise<T> {
 /** GET /products – FR-01. */
 export function fetchProducts(): Promise<ProductSummary[]> {
   return getJson<ProductSummary[]>('/products');
+}
+
+/** GET /products/:id – FR-02. */
+export function fetchProduct(id: string): Promise<ProductDetail> {
+  return getJson<ProductDetail>(`/products/${encodeURIComponent(id)}`);
 }
