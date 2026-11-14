@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { formatVnd, type ProductDetail, type SizeCode } from '@brewlite/shared';
 import { useState } from 'react';
-import { useCart } from '@/features/cart/CartProvider';
+import { CART_LIMIT_MESSAGES, useCart } from '@/features/cart/CartProvider';
 import { ApiRequestError, fetchProduct } from '@/lib/api';
 import { describePrice, lineTotal } from './pricing';
 
@@ -49,6 +49,7 @@ function DetailForm({ product }: { product: ProductDetail }) {
   const [note, setNote] = useState('');
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const total = lineTotal(product, size, toppingIds, qty);
 
@@ -59,7 +60,7 @@ function DetailForm({ product }: { product: ProductDetail }) {
   }
 
   function addToCart() {
-    cart.add({
+    const result = cart.add({
       productId: product.id,
       name: product.name,
       imageUrl: product.imageUrl,
@@ -70,7 +71,8 @@ function DetailForm({ product }: { product: ProductDetail }) {
       qty,
       unitPrice: total / qty,
     });
-    setAdded(true);
+    setAdded(result.ok);
+    setLimitError(result.ok ? null : CART_LIMIT_MESSAGES[result.reason]);
   }
 
   return (
@@ -161,7 +163,7 @@ function DetailForm({ product }: { product: ProductDetail }) {
             <div className="flex items-center rounded-[10px] border border-line bg-white">
               <button type="button" aria-label="Giảm số lượng" onClick={() => setQty((q) => Math.max(1, q - 1))} className="size-11 text-base font-medium text-brand">−</button>
               <span aria-live="polite" className="w-11 text-center text-base font-semibold">{qty}</span>
-              <button type="button" aria-label="Tăng số lượng" onClick={() => setQty((q) => Math.min(20, q + 1))} className="size-11 text-base font-medium text-brand">+</button>
+              <button type="button" aria-label="Tăng số lượng" onClick={() => setQty((q) => Math.min(10, q + 1))} className="size-11 text-base font-medium text-brand">+</button>
             </div>
             <button
               type="button"
@@ -172,6 +174,11 @@ function DetailForm({ product }: { product: ProductDetail }) {
               {product.inStock ? `Thêm vào giỏ · ${formatVnd(total)}` : 'Hết hàng'}
             </button>
           </div>
+          {limitError && (
+            <p role="alert" className="text-sm font-medium text-[#8a1c10]">
+              {limitError}
+            </p>
+          )}
           {added && (
             <p role="status" className="text-sm font-medium text-brand">
               Đã thêm vào giỏ. <Link href="/cart" className="underline">Xem giỏ hàng</Link>
