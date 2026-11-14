@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { PaymentFailReason } from '@brewlite/shared';
 
 export type GatewayOutcome =
@@ -20,6 +20,7 @@ export interface PaymentGateway {
 }
 
 export const PAYMENT_GATEWAY = Symbol('PAYMENT_GATEWAY');
+export const GATEWAY_CLOCK = Symbol('GATEWAY_CLOCK');
 export const SETTLE_AFTER_MS = 5_000;
 
 /**
@@ -34,7 +35,7 @@ export class MockGateway implements PaymentGateway {
   calls = 0;
   private readonly settleAt = new Map<string, number>();
 
-  constructor(private readonly now: () => number = () => Date.now()) {}
+  constructor(@Optional() @Inject(GATEWAY_CLOCK) private readonly now: () => number = () => Date.now()) {}
 
   charge(ref: string, request: GatewayRequest): Promise<GatewayOutcome> {
     this.calls += 1;
