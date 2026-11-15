@@ -17,6 +17,8 @@ Mọi tạo phẩm của đồ án nằm trong thư mục này và được qu�
 | 1–5 | Ma trận truy vết | [traceability-matrix.md](traceability-matrix.md) |
 | 4 | Product Backlog | [process/product-backlog.md](process/product-backlog.md) |
 | 4 | Sprint 1: mục tiêu, kết quả, minh chứng CI | [process/sprint-1.md](process/sprint-1.md) |
+| 5 | Triển khai production, CD, smoke test, rollback, checklist nghiệm thu | [deployment.md](deployment.md) |
+| 5 | Sprint 2: mục tiêu, kết quả, Review/Retrospective (sẽ có sau) | process/sprint-2.md |
 | — | Báo cáo tổng hợp (LaTeX → PDF) | [report/main.pdf](report/main.pdf) |
 
 ## Lịch sử thay đổi tài liệu

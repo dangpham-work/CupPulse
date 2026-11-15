@@ -1,0 +1,57 @@
+% Task 5 – Sprint 2, CI/CD và Delivery
+% Nguồn: docs/process/sprint-2.md, docs/deployment.md, .github/workflows/*.yml
+\section{Task 5 -- Triển khai Sprint 2, CI/CD và Delivery}\label{sec:sprint2}
+
+\textbf{Sprint Goal:} hoàn thành luồng end-to-end menu $\rightarrow$ giỏ $\rightarrow$ đăng nhập $\rightarrow$ đặt đơn
+$\rightarrow$ thanh toán $\rightarrow$ theo dõi đơn, tự động đóng gói và triển khai production. Sprint gồm các mục
+PB-10 $\rightarrow$ PB-19 và PB-25. Chi tiết: \code{docs/process/sprint-2.md}.
+
+\subsection{Task 5.1 -- Hoàn thiện MVP}
+
+\begin{itemize}
+  \item \textbf{Xác thực:} \code{POST /auth/register}, \code{POST /auth/login}; mật khẩu băm bcrypt (cost 12), JWT HS256 hết hạn
+        60 phút, \code{RolesGuard} cho ba vai trò CUSTOMER, STAFF, MANAGER (MANAGER làm được mọi việc của STAFF).
+  \item \textbf{Đặt đơn:} \code{POST /orders} tính lại giá ở server (BR-05), chụp snapshot tên và đơn giá (BR-06), trừ kho bằng
+        \code{UPDATE ... WHERE stock >= qty} trong một transaction nên tồn kho không bao giờ âm kể cả khi đặt đồng thời (BR-07).
+        Đơn giữ kho 15 phút; tác vụ định kỳ hủy đơn quá hạn và hoàn kho (BR-08).
+  \item \textbf{Thanh toán:} \code{POST /payments} với header \code{Idempotency-Key}; Payment Service mô phỏng quyết định kết quả theo số thẻ thử.
+        Trả 201 khi thành công, 402 khi bị từ chối, 202 khi chậm. Thất bại lần thứ 3 hủy đơn và hoàn kho (BR-09).
+        Cơ sở dữ liệu chỉ lưu bốn số cuối của thẻ (BR-18).
+  \item \textbf{Giao diện:} chi tiết sản phẩm, giỏ hàng, đăng ký/đăng nhập, checkout, xác nhận và lịch sử đơn, màn nhân viên, PWA.
+\end{itemize}
+
+\subsection{Task 5.2 -- Tích hợp và kiểm thử}
+
+\begin{longtable}{|p{2.6cm}|p{3cm}|p{9cm}|}
+\caption{Kiểm thử Sprint 2}\label{tab:t52}\\
+\hline
+\thead \textbf{Mã} & \textbf{Loại} & \textbf{Nội dung} \\ \hline
+\endfirsthead
+\hline
+UNIT-T10 $\rightarrow$ T14 & Unit (Jest) & Tạo đơn, Payment Service mô phỏng, auth, JWT, phân quyền \\ \hline
+API-T03 $\rightarrow$ T07 & API (Prisma giả lập) & 401/403, validate body, 404 đơn người khác \\ \hline
+INT-T01 $\rightarrow$ T09 & Integration (PostgreSQL) & Trừ kho, rollback khi thiếu kho, đặt đồng thời, idempotency, 3 lần lỗi, 202, hết hạn giữ kho \\ \hline
+UI-T02 $\rightarrow$ T08 & Component (Vitest) & Giá, giỏ, auth, checkout, đơn, nhân viên, service worker \\ \hline
+E2E-T01 & End-to-end (Playwright) & Menu $\rightarrow$ giỏ $\rightarrow$ đăng ký/đăng nhập $\rightarrow$ thẻ 4242 $\rightarrow$ xác nhận đơn \\ \hline
+\end{longtable}
+
+Kết quả chạy cục bộ ngày 14/11/2026: API 50/50, integration 14/14, web 48/48, shared 7/7, E2E-T01 đạt trên hệ thống thật.
+Migration \code{20261114010000\_sprint2\_orders} và seed idempotent tái tạo được cơ sở dữ liệu; \code{GET /health} kiểm tra DB.
+
+\subsection{Task 5.3 -- Continuous Delivery}
+
+Workflow \code{cd.yml}: \emph{quality gate} (lint, typecheck, test, build) $\rightarrow$ build image API với tag commit SHA và
+\code{vX.Y.Z} $\rightarrow$ push GHCR $\rightarrow$ deploy API (Render deploy hook) và web (Vercel CLI) $\rightarrow$ smoke test
+(\code{/health}, \code{/api/v1/products}, trang chủ) $\rightarrow$ tự rollback về SHA trước nếu lỗi. Migration chạy khi container khởi động
+(\code{prisma migrate deploy}); lỗi migration thì bản cũ vẫn phục vụ. Secret chỉ nằm trong GitHub Secrets và được che khỏi log.
+
+\subsection{Task 5.4 -- Triển khai và bàn giao}
+
+Hướng dẫn tạo Render, Vercel, secret và rollback nằm ở \code{docs/deployment.md}; release notes ở \code{docs/release-notes-v1.0.0.md}.
+\textbf{URL production chưa được điền} cho đến khi chủ dự án tạo các dịch vụ trên; mục này cần cập nhật trước khi nộp.
+
+\subsection{Sprint Review và Retrospective}
+
+Đã hoàn thành các mục Must PB-10 $\rightarrow$ PB-17 và PB-25 ở môi trường cục bộ có test. Chưa hoàn thành triển khai production thật
+(PB-18, PB-19). Các mục Should PB-20 $\rightarrow$ PB-24 không thực hiện. Bài học: kéo image và cài phụ thuộc sớm khi mạng chậm, chạy
+integration test trước khi commit tính năng chạm cơ sở dữ liệu, và tách thư mục làm việc khi nhiều tác vụ song song.

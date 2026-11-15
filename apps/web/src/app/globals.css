@@ -1,11 +1,18 @@
 @import 'tailwindcss';
 
+/* Token lấy từ Figma "App Screens" (jHQH3CgHdq6YDM2f4EpYNa). */
 @theme {
-  --color-brew-50: #fff8ee;
-  --color-brew-100: #f6e7d2;
-  --color-brew-700: #7a4a1e;
-  --color-brew-900: #4a2c12;
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --color-cream: #faf6f1; /* nền trang */
+  --color-brand: #6f3b1f; /* nút chính, giá, logo */
+  --color-accent: #c8773a; /* nhãn Bán chạy/Mới, badge giỏ hàng */
+  --color-tint: #f6e7d8; /* nền nút giỏ hàng */
+  --color-line: #eadfd4; /* viền thẻ, input, header */
+  --color-ink: #2b1a12; /* chữ chính */
+  --color-muted: #7a6a60; /* chữ phụ */
+  --color-faint: #a89a90; /* placeholder */
+  --color-disabled: #d9cfc6; /* nút thêm khi hết hàng */
+  --color-soldout: #5e5a57; /* nhãn Hết hàng */
+  --font-sans: var(--font-be-vietnam-pro), system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
 html {
@@ -16,7 +23,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Dải tab danh mục cuộn ngang bằng vuốt, không hiện thanh cuộn. */
+/* Dải chip danh mục cuộn ngang bằng vuốt, không hiện thanh cuộn. */
 .no-scrollbar {
   scrollbar-width: none;
 }

@@ -77,3 +77,136 @@ model ProductTopping {
   @@id([productId, toppingId])
   @@map("product_toppings")
 }
+
+// ---------- Sprint 2: người dùng, đơn hàng, thanh toán (Class-01) ----------
+
+enum Role {
+  CUSTOMER
+  STAFF
+  MANAGER
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CARD
+  WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique // luôn lưu chữ thường (AC-09.3)
+  passwordHash  String   @map("password_hash")
+  fullName      String   @map("full_name")
+  phone         String?
+  role          Role     @default(CUSTOMER)
+  loyaltyPoints Int      @default(0) @map("loyalty_points")
+  createdAt     DateTime @default(now()) @map("created_at")
+  orders        Order[]
+  idempotency   IdempotencyKey[]
+
+  @@map("users")
+}
+
+model Order {
+  id        String      @id @default(uuid()) @db.Uuid
+  code      String      @unique // BL-YYMMDD-NNNN (BR-16)
+  userId    String      @map("user_id") @db.Uuid
+  user      User        @relation(fields: [userId], references: [id])
+  status    OrderStatus @default(PENDING_PAYMENT)
+  subtotal  Int
+  discount  Int         @default(0)
+  total     Int
+  expiresAt DateTime    @map("expires_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+  items     OrderItem[]
+  payments  Payment[]
+  events    OrderStatusEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+/// Snapshot tên và giá lúc đặt (BR-06).
+model OrderItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  orderId      String   @map("order_id") @db.Uuid
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String   @map("product_id") @db.Uuid
+  productName  String   @map("product_name")
+  size         SizeCode
+  sizeExtra    Int      @map("size_extra")
+  toppings     Json     @default("[]") // [{ id, name, price }]
+  note         String   @default("")
+  quantity     Int
+  unitPrice    Int      @map("unit_price")
+  lineTotal    Int      @map("line_total")
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(uuid()) @db.Uuid
+  orderId   String      @map("order_id") @db.Uuid
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([orderId, createdAt])
+  @@map("order_status_events")
+}
+
+/// Số thứ tự đơn theo ngày (BR-16); tăng nguyên tử bằng upsert.
+model OrderCounter {
+  day  String @id // YYMMDD
+  last Int    @default(0)
+
+  @@map("order_counters")
+}
+
+model Payment {
+  id         String        @id @default(uuid()) @db.Uuid
+  orderId    String        @map("order_id") @db.Uuid
+  order      Order         @relation(fields: [orderId], references: [id])
+  method     PaymentMethod
+  status     PaymentStatus
+  amount     Int
+  cardLast4  String?       @map("card_last4") // BR-18: không lưu số thẻ đầy đủ/CVV
+  cardBrand  String?       @map("card_brand")
+  failReason String?       @map("fail_reason")
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@index([orderId])
+  // BR-10: tối đa 1 payment SUCCEEDED cho mỗi đơn (partial unique index trong migration SQL).
+  @@map("payments")
+}
+
+/// Idempotency-Key của POST /payments (BR-11), hiệu lực 24 giờ theo người dùng.
+model IdempotencyKey {
+  userId       String   @map("user_id") @db.Uuid
+  user         User     @relation(fields: [userId], references: [id])
+  key          String
+  requestHash  String   @map("request_hash")
+  statusCode   Int?     @map("status_code") // null = đang xử lý
+  responseBody Json?    @map("response_body")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@id([userId, key])
+  @@map("idempotency_keys")
+}

@@ -13,6 +13,10 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "dev:api": "pnpm --filter @brewlite/api dev",
-    "dev:web": "pnpm --filter @brewlite/web dev"
+    "dev:web": "pnpm --filter @brewlite/web dev",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.49.1"
   }
 }

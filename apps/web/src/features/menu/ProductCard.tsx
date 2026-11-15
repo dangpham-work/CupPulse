@@ -1,32 +1,44 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { formatVnd, type ProductSummary } from '@brewlite/shared';
 
-/** Thẻ món: ảnh, tên, giá; món hết hàng có nhãn "Hết hàng" (AC-01.4, AC-01.5). */
+/** Thẻ món (Figma: ProductCard): ảnh 200px, tên, giá, nút "+". Món hết hàng có nhãn "Hết hàng" (AC-01.4, AC-01.5). */
 export function ProductCard({ product }: { product: ProductSummary }) {
+  const { inStock } = product;
   return (
-    <article
-      className={`flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 ${
-        product.inStock ? '' : 'opacity-70'
-      }`}
-    >
-      <div className="relative aspect-square bg-brew-50">
+    <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white">
+      <div className="relative h-[200px] bg-tint">
         <Image
           src={product.imageUrl}
           alt={product.name}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          className="object-contain p-4"
+          className={`object-contain p-4 ${inStock ? '' : 'opacity-60'}`}
           unoptimized
         />
-        {!product.inStock && (
-          <span className="absolute left-2 top-2 rounded-full bg-stone-800 px-2.5 py-1 text-xs font-semibold text-white">
+        {!inStock && (
+          <span className="absolute left-3.5 top-3.5 rounded-full bg-soldout px-2.5 py-1 text-xs font-semibold text-white">
             Hết hàng
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <h2 className="line-clamp-2 text-sm font-semibold text-stone-900">{product.name}</h2>
-        <p className="mt-auto font-bold text-brew-700">{formatVnd(product.basePrice)}</p>
+      <div className="flex flex-1 flex-col gap-1 px-4 py-4 md:px-[18px]">
+        <h2 className={`line-clamp-2 text-[17px] font-semibold ${inStock ? 'text-ink' : 'text-muted'}`}>
+          <Link href={`/products/${product.id}`} className="after:absolute after:inset-0">
+            {product.name}
+          </Link>
+        </h2>
+        <div className="mt-auto flex items-center justify-between pt-3">
+          <p className={`text-lg font-bold ${inStock ? 'text-brand' : 'text-muted'}`}>{formatVnd(product.basePrice)}</p>
+          <span
+            aria-hidden="true"
+            className={`flex size-9 items-center justify-center rounded-full text-xl font-semibold text-white ${
+              inStock ? 'bg-brand' : 'bg-disabled'
+            }`}
+          >
+            +
+          </span>
+        </div>
       </div>
     </article>
   );

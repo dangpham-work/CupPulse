@@ -94,6 +94,20 @@ describe('MenuView (FR-01, AC-01.3, AC-01.4)', () => {
     expect(within(available).queryByText('Hết hàng')).not.toBeInTheDocument();
   });
 
+  it('tìm món không phân biệt dấu và báo khi không có kết quả', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => jsonResponse(products)));
+    renderMenu();
+    await screen.findByText('Trà đào');
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Tìm món' }), 'tra dao');
+    expect(screen.getByText('Trà đào')).toBeInTheDocument();
+    expect(screen.queryByText('Cà phê sữa đá')).not.toBeInTheDocument();
+
+    await userEvent.clear(screen.getByRole('searchbox', { name: 'Tìm món' }));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Tìm món' }), 'xyz');
+    expect(screen.getByText('Không tìm thấy món phù hợp')).toBeInTheDocument();
+  });
+
   it('lọc theo tab danh mục', async () => {
     vi.stubGlobal('fetch', vi.fn(() => jsonResponse(products)));
     renderMenu();
