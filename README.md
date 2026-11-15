@@ -57,7 +57,7 @@ Container API tự chạy `prisma migrate deploy` rồi seed dữ liệu mẫu (
 
 ### Cách 2 – Chạy trực tiếp bằng pnpm
 
-Yêu cầu: Node.js 22+, pnpm 10 (`npm install -g pnpm@10`), một PostgreSQL 16 đang chạy (ví dụ `docker compose up -d db`).
+Yêu cầu: Node.js 26 (xem `.nvmrc`), pnpm 10 (`npm install -g pnpm@10`), một PostgreSQL 16 đang chạy (ví dụ `docker compose up -d db`).
 
 ```bash
 pnpm install

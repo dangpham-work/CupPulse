@@ -1,6 +1,6 @@
 # BrewLite API – build từ thư mục gốc monorepo:
 #   docker build -f apps/api/Dockerfile -t brewlite-api .
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 RUN apk add --no-cache openssl && npm install -g pnpm@10.34.9
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.base.json ./
@@ -11,7 +11,7 @@ COPY packages/shared packages/shared
 COPY apps/api apps/api
 RUN pnpm --filter @brewlite/shared build && pnpm --filter @brewlite/api build
 
-FROM node:22-alpine AS runtime
+FROM node:26-alpine AS runtime
 RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 WORKDIR /app
