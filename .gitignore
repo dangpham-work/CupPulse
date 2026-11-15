@@ -235,3 +235,7 @@ test-results/
 # Playwright
 playwright-report/
 test-results/
+
+# File env riêng cho từng môi trường (vd. .env.render chứa secret production) – chỉ commit file mẫu
+.env.*
+!.env.example
