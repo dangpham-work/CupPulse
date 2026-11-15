@@ -41,19 +41,83 @@ type SeedProduct = {
 };
 
 const products: SeedProduct[] = [
-  { n: 1, name: 'Cà phê sữa đá', description: 'Cà phê phin đậm vị pha sữa đặc, uống cùng đá.', category: 'ca-phe', image: 'coffee', basePrice: 35000, stock: 50, toppings: [2, 4] },
-  { n: 2, name: 'Cà phê đen đá', description: 'Cà phê phin nguyên chất, đắng nhẹ, hậu ngọt.', category: 'ca-phe', image: 'coffee', basePrice: 29000, stock: 50, toppings: [4] },
-  { n: 3, name: 'Bạc xỉu', description: 'Nhiều sữa, ít cà phê, béo và ngọt dịu.', category: 'ca-phe', image: 'coffee', basePrice: 39000, stock: 40, toppings: [2, 3] },
-  { n: 4, name: 'Latte', description: 'Espresso cùng sữa tươi đánh nóng.', category: 'ca-phe', image: 'coffee', basePrice: 45000, stock: 30, toppings: [3, 4] },
-  { n: 5, name: 'Cold brew cam sả', description: 'Cà phê ủ lạnh 16 giờ với cam và sả.', category: 'ca-phe', image: 'coffee', basePrice: 49000, stock: 0, toppings: [] },
-  { n: 6, name: 'Trà đào cam sả', description: 'Trà đen, đào miếng, cam tươi và sả.', category: 'tra', image: 'tea', basePrice: 45000, stock: 40, toppings: [1] },
-  { n: 7, name: 'Trà sữa trân châu', description: 'Trà sữa đậm vị kèm trân châu đen.', category: 'tra', image: 'tea', basePrice: 39000, stock: 40, toppings: [1, 3] },
-  { n: 8, name: 'Trà xanh matcha latte', description: 'Matcha Nhật pha sữa tươi.', category: 'tra', image: 'tea', basePrice: 49000, stock: 25, toppings: [1, 3] },
-  { n: 9, name: 'Cà phê đá xay', description: 'Cà phê xay cùng đá và kem tươi.', category: 'da-xay', image: 'frappe', basePrice: 55000, stock: 20, toppings: [2, 3] },
-  { n: 10, name: 'Socola đá xay', description: 'Socola Bỉ xay cùng đá và kem.', category: 'da-xay', image: 'frappe', basePrice: 55000, stock: 20, toppings: [1, 3] },
-  { n: 11, name: 'Bánh croissant bơ', description: 'Croissant bơ Pháp nướng mỗi sáng.', category: 'banh', image: 'cake', basePrice: 32000, stock: 15 },
-  { n: 12, name: 'Bánh tiramisu', description: 'Tiramisu mascarpone, rắc bột cacao.', category: 'banh', image: 'cake', basePrice: 42000, stock: 10 },
-  { n: 13, name: 'Trà vải (ngừng bán)', description: 'Món theo mùa, đã ẩn khỏi menu.', category: 'tra', image: 'tea', basePrice: 45000, stock: 10, isActive: false, toppings: [1] },
+  {
+    n: 1, name: 'Cà phê sữa đá', category: 'ca-phe', image: 'ca-phe-sua-da', basePrice: 35000, stock: 50, toppings: [2, 4],
+    description:
+      'Ly cà phê đặc trưng của Sài Gòn: cà phê Robusta rang mộc được nhỏ giọt chậm qua phin nhôm, hòa cùng sữa đặc rồi khuấy đều với đá viên. ' +
+      'Vị đậm, đắng vừa, béo ngọt và thơm mùi cà phê rang. Muốn tỉnh táo hơn, bạn thêm một shot espresso; thích nhai giòn thì chọn thạch cà phê.',
+  },
+  {
+    n: 2, name: 'Cà phê đen đá', category: 'ca-phe', image: 'ca-phe-den-da', basePrice: 29000, stock: 50, toppings: [4],
+    description:
+      'Cà phê phin nguyên chất, pha đậm rồi rót lên đá, không thêm sữa. Vị đắng rõ, hậu ngọt và thơm mùi gỗ, chocolate đặc trưng của Robusta Việt Nam. ' +
+      'Hợp với người thích cà phê "thật", cần tỉnh táo cho buổi sáng hoặc giờ làm việc. Có thể thêm shot espresso cho vị mạnh hơn.',
+  },
+  {
+    n: 3, name: 'Bạc xỉu', category: 'ca-phe', image: 'bac-xiu', basePrice: 39000, stock: 40, toppings: [2, 3],
+    description:
+      'Phiên bản "nhiều sữa, ít cà phê" quen thuộc của người Sài Gòn: sữa đặc và sữa tươi làm nền, cà phê phin nhỏ giọt lên trên tạo lớp màu nâu nhạt. ' +
+      'Vị béo, ngọt dịu, chỉ thoảng vị đắng nên dễ uống cho người mới làm quen cà phê. Hợp nhất khi thêm thạch cà phê hoặc lớp kem cheese mặn nhẹ.',
+  },
+  {
+    n: 4, name: 'Latte', category: 'ca-phe', image: 'latte', basePrice: 45000, stock: 30, toppings: [3, 4],
+    description:
+      'Espresso pha máy kết hợp sữa tươi đánh nóng mịn, phủ lớp bọt sữa mỏng có vẽ latte art. ' +
+      'Vị cà phê nhẹ, êm và béo của sữa, ít ngọt; có thể dùng nóng hoặc đá. Thêm shot espresso nếu bạn muốn đậm hơn, hoặc kem cheese cho vị béo mặn.',
+  },
+  {
+    n: 5, name: 'Cold brew cam sả', category: 'ca-phe', image: 'cold-brew-cam-sa', basePrice: 49000, stock: 0, toppings: [],
+    description:
+      'Cà phê Arabica ủ lạnh 16 giờ nên ít đắng và ít chua, uống mượt. Thêm nước cam tươi và sả đập dập tạo lớp màu cam – nâu bắt mắt. ' +
+      'Vị chua ngọt của cam, hương sả the mát quyện cùng cà phê, rất hợp ngày nắng nóng. Món pha theo mẻ nên số lượng có hạn mỗi ngày.',
+  },
+  {
+    n: 6, name: 'Trà đào cam sả', category: 'tra', image: 'tra-dao-cam-sa', basePrice: 45000, stock: 40, toppings: [1],
+    description:
+      'Trà đen ủ lạnh pha cùng siro đào, đào miếng giòn, cam vàng cắt lát và sả tươi. ' +
+      'Vị trà thanh, chua ngọt hài hòa, thơm mùi đào và sả, uống mát lạnh và không gắt. Đào miếng ăn kèm được; thêm trân châu đen nếu muốn có gì nhai.',
+  },
+  {
+    n: 7, name: 'Trà sữa trân châu', category: 'tra', image: 'tra-sua-tran-chau', basePrice: 39000, stock: 40, toppings: [1, 3],
+    description:
+      'Trà đen Assam pha đậm, hòa cùng sữa béo, kèm trân châu đen nấu đường nâu mỗi ngày. ' +
+      'Vị trà rõ, ngọt vừa, trân châu dẻo dai. Muốn nhiều trân châu hơn thì chọn thêm topping, hoặc phủ kem cheese để có vị mặn béo.',
+  },
+  {
+    n: 8, name: 'Trà xanh matcha latte', category: 'tra', image: 'matcha-latte', basePrice: 49000, stock: 25, toppings: [1, 3],
+    description:
+      'Bột matcha Nhật Bản được đánh tan với nước ấm rồi rót lên sữa tươi và đá, tạo hai lớp xanh – trắng. ' +
+      'Vị trà xanh thơm, hơi chát nhẹ ở hậu, béo vừa và ít ngọt. Kết hợp đẹp với kem cheese hoặc trân châu đen.',
+  },
+  {
+    n: 9, name: 'Cà phê đá xay', category: 'da-xay', image: 'ca-phe-da-xay', basePrice: 55000, stock: 20, toppings: [2, 3],
+    description:
+      'Cà phê espresso xay nhuyễn cùng sữa và đá thành hỗn hợp sánh mịn, mát lạnh như kem, phủ kem tươi. ' +
+      'Vị cà phê rõ nhưng dịu, ngọt béo, thích hợp buổi chiều nóng. Thêm thạch cà phê để có độ dai, hoặc kem cheese cho vị béo mặn.',
+  },
+  {
+    n: 10, name: 'Socola đá xay', category: 'da-xay', image: 'socola-da-xay', basePrice: 55000, stock: 20, toppings: [1, 3],
+    description:
+      'Socola đen Bỉ xay cùng sữa tươi và đá, phủ kem tươi và rưới sốt socola quanh thành ly. ' +
+      'Vị cacao đậm, ngọt béo, không chứa cà phê nên phù hợp cả trẻ em và người không uống được caffeine. Ngon hơn khi thêm trân châu đen.',
+  },
+  {
+    n: 11, name: 'Bánh croissant bơ', category: 'banh', image: 'croissant-bo', basePrice: 32000, stock: 15,
+    description:
+      'Bánh sừng bò cán bằng bơ lạt kiểu Pháp, nướng mới mỗi sáng tại quầy. ' +
+      'Vỏ giòn xốp nhiều lớp, ruột mềm và thơm mùi bơ. Ăn kèm cà phê đen hoặc latte cho bữa sáng nhanh; số lượng có hạn mỗi ngày.',
+  },
+  {
+    n: 12, name: 'Bánh tiramisu', category: 'banh', image: 'tiramisu', basePrice: 42000, stock: 10,
+    description:
+      'Bánh tiramisu kiểu Ý: lớp bánh lady finger thấm espresso xen kẽ kem phô mai mascarpone, rắc bột cacao nguyên chất. ' +
+      'Vị béo mịn, ngọt vừa, thoảng đắng của cà phê và cacao. Bánh được bảo quản lạnh, ngon nhất khi dùng trong ngày.',
+  },
+  {
+    n: 13, name: 'Trà vải (ngừng bán)', category: 'tra', image: 'tra-vai', basePrice: 45000, stock: 10, isActive: false, toppings: [1],
+    description:
+      'Trà đen pha cùng vải thiều ngâm và vài lát chanh, chỉ bán theo mùa vải. Món hiện đã ẩn khỏi menu và sẽ quay lại vào mùa sau.',
+  },
 ];
 
 /** Tài khoản demo (staff/manager/khách). Mật khẩu lấy từ SEED_DEMO_PASSWORD, mặc định chỉ dùng cho local/demo. */
@@ -80,7 +144,7 @@ async function main(): Promise<void> {
     const data = {
       name: p.name,
       description: p.description,
-      imageUrl: `/images/menu/${p.image}.svg`,
+      imageUrl: `/images/menu/${p.image}.webp`,
       basePrice: p.basePrice,
       stock: p.stock,
       isActive: p.isActive ?? true,
