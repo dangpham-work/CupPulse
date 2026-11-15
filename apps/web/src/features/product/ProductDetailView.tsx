@@ -28,7 +28,7 @@ export function ProductDetailView({ id }: { id: string }) {
       <div role="alert" className="mx-auto mt-8 max-w-md rounded-2xl border border-line bg-white p-6 text-center">
         <p className="font-medium text-ink">{notFound ? 'Không tìm thấy món này.' : 'Không tải được món. Vui lòng thử lại.'}</p>
         {notFound ? (
-          <Link href="/" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">
+          <Link href="/menu" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">
             Về thực đơn
           </Link>
         ) : (
@@ -78,7 +78,7 @@ function DetailForm({ product }: { product: ProductDetail }) {
   return (
     <div className="flex flex-col gap-6">
       <nav aria-label="Đường dẫn" className="text-sm font-medium text-muted">
-        <Link href="/" className="hover:text-brand">Thực đơn</Link>
+        <Link href="/menu" className="hover:text-brand">Thực đơn</Link>
         {' / '}
         <span>{product.category.name}</span>
         {' / '}
@@ -86,8 +86,8 @@ function DetailForm({ product }: { product: ProductDetail }) {
       </nav>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-14">
-        <div className="relative aspect-square w-full rounded-3xl bg-tint lg:size-[580px] lg:shrink-0">
-          <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 1024px) 580px, 100vw" className="object-contain p-10" unoptimized />
+        <div className="relative aspect-square w-full overflow-hidden rounded-3xl bg-tint lg:size-[580px] lg:shrink-0">
+          <Image src={product.imageUrl} alt={product.name} fill sizes="(min-width: 1024px) 580px, 100vw" className="object-cover" unoptimized />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-7">

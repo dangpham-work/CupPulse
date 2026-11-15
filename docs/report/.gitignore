@@ -8,3 +8,6 @@
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# Ảnh tạm của tex2docx.py
+.docx-tmp/

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Be_Vietnam_Pro } from 'next/font/google';
 import type { ReactNode } from 'react';
+import { Footer } from '@/components/Footer';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { Providers } from './providers';
 import './globals.css';
@@ -27,8 +28,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={beVietnamPro.variable}>
-      <body className="min-h-dvh bg-cream font-sans text-ink antialiased">
-        <Providers>{children}</Providers>
+      <body className="flex min-h-dvh flex-col bg-cream font-sans text-ink antialiased">
+        <div className="flex-1">
+          <Providers>{children}</Providers>
+        </div>
+        <Footer />
         <ServiceWorkerRegister />
       </body>
     </html>

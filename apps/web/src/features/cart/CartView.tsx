@@ -21,7 +21,7 @@ export function CartView() {
       <div className="mx-auto max-w-md rounded-2xl border border-line bg-white p-8 text-center">
         <p className="text-lg font-semibold text-ink">Giỏ hàng trống</p>
         <p className="mt-1 text-sm text-muted">Hãy chọn vài món từ thực đơn nhé.</p>
-        <Link href="/" className="mt-5 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">
+        <Link href="/menu" className="mt-5 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">
           Xem thực đơn
         </Link>
         <button type="button" disabled className="mt-3 block min-h-11 w-full rounded-[10px] bg-disabled text-sm font-semibold text-white">
@@ -37,8 +37,8 @@ export function CartView() {
       <ul className="flex flex-col gap-3">
         {cart.lines.map((l) => (
           <li key={l.id} className="flex gap-3 rounded-2xl border border-line bg-white p-3">
-            <div className="relative size-20 shrink-0 rounded-xl bg-tint">
-              <Image src={l.imageUrl} alt="" fill sizes="80px" className="object-contain p-2" unoptimized />
+            <div className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-tint">
+              <Image src={l.imageUrl} alt="" fill sizes="80px" className="object-cover" unoptimized />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex items-start justify-between gap-2">

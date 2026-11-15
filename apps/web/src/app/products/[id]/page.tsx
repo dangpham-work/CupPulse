@@ -6,7 +6,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   return (
     <>
-      <Header active="/" />
+      <Header active="/menu" />
       <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-12 lg:px-20">
         <ProductDetailView id={id} />
       </main>

@@ -1,13 +1,20 @@
 import { Header } from '@/components/Header';
-import { MenuView } from '@/features/menu/MenuView';
+import { FeaturedProducts } from '@/features/home/FeaturedProducts';
+import { AnnouncementBar, CategoryTiles, Hero, Highlights, OrderCta, Story } from '@/features/home/HomeSections';
 
-/** Trang chủ = menu (SRS mục 9, route "/"). Figma: 01 — Thực đơn (Menu). */
+/** Trang chủ: banner, điểm nổi bật, món bán chạy, danh mục, câu chuyện rút gọn, kêu gọi đăng ký. Thực đơn đầy đủ ở /menu. */
 export default function HomePage() {
   return (
     <>
+      <AnnouncementBar />
       <Header active="/" />
-      <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-12 lg:px-20">
-        <MenuView />
+      <main>
+        <Hero />
+        <Highlights />
+        <FeaturedProducts />
+        <CategoryTiles />
+        <Story teaser />
+        <OrderCta />
       </main>
     </>
   );
