@@ -4,7 +4,7 @@
   "description": "BrewLite – đặt cà phê mobile-first/PWA (Next.js, NestJS, PostgreSQL)",
   "packageManager": "pnpm@10.34.9",
   "engines": {
-    "node": ">=22"
+    "node": ">=26"
   },
   "scripts": {
     "build": "pnpm -r build",
