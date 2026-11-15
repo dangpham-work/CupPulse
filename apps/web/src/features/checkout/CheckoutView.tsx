@@ -159,7 +159,7 @@ export function CheckoutView({ orderId, pollMs = 2500 }: { orderId?: string; pol
       <div className="mx-auto max-w-md rounded-2xl border border-line bg-white p-6 text-center">
         {error && <p role="alert" className="font-medium text-[#8a1c10]">{error}</p>}
         {!error && <p className="font-medium text-ink">Đơn này không còn chờ thanh toán.</p>}
-        <Link href="/" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">Về thực đơn</Link>
+        <Link href="/menu" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">Về thực đơn</Link>
       </div>
     );
   }
@@ -184,7 +184,7 @@ export function CheckoutView({ orderId, pollMs = 2500 }: { orderId?: string; pol
     return (
       <div className="mx-auto max-w-md rounded-2xl border border-line bg-white p-8 text-center">
         <p className="text-lg font-semibold text-ink">Giỏ hàng trống</p>
-        <Link href="/" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">Xem thực đơn</Link>
+        <Link href="/menu" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">Xem thực đơn</Link>
       </div>
     );
   }

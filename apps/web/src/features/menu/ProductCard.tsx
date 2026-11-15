@@ -6,14 +6,14 @@ import { formatVnd, type ProductSummary } from '@brewlite/shared';
 export function ProductCard({ product }: { product: ProductSummary }) {
   const { inStock } = product;
   return (
-    <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white">
-      <div className="relative h-[200px] bg-tint">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="relative aspect-square overflow-hidden bg-tint md:aspect-[5/4]">
         <Image
           src={product.imageUrl}
           alt={product.name}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          className={`object-contain p-4 ${inStock ? '' : 'opacity-60'}`}
+          className={`object-cover object-[50%_60%] transition duration-300 group-hover:scale-105 ${inStock ? '' : 'opacity-60 grayscale'}`}
           unoptimized
         />
         {!inStock && (

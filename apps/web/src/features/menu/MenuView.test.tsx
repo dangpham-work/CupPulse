@@ -17,11 +17,11 @@ function jsonResponse(body: unknown, status = 200) {
   return Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
 }
 
-function renderMenu() {
+function renderMenu(initialCategory?: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MenuView />
+      <MenuView initialCategory={initialCategory} />
     </QueryClientProvider>,
   );
 }
@@ -117,6 +117,16 @@ describe('MenuView (FR-01, AC-01.3, AC-01.4)', () => {
 
     await waitFor(() => expect(screen.queryByText('Cà phê sữa đá')).not.toBeInTheDocument());
     expect(screen.getByText('Trà đào')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Trà' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('mở sẵn danh mục khi vào từ ô danh mục ở trang chủ (/menu?danh-muc=tra)', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => jsonResponse(products)));
+
+    renderMenu('tra');
+
+    expect(await screen.findByText('Trà đào')).toBeInTheDocument();
+    expect(screen.queryByText('Cà phê sữa đá')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Trà' })).toHaveAttribute('aria-selected', 'true');
   });
 });

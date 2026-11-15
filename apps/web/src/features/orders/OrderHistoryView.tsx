@@ -39,7 +39,7 @@ export function OrderHistoryView() {
     return (
       <div className="mx-auto max-w-md rounded-2xl border border-line bg-white p-8 text-center">
         <p className="text-lg font-semibold text-ink">Bạn chưa có đơn nào</p>
-        <Link href="/" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">Xem menu</Link>
+        <Link href="/menu" className="mt-4 inline-flex min-h-11 items-center rounded-[10px] bg-brand px-6 text-sm font-semibold text-white">Xem menu</Link>
       </div>
     );
   }

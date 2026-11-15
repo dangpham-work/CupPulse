@@ -92,7 +92,7 @@ describe('OrderHistoryView (FR-08)', () => {
     mount(<OrderHistoryView />);
 
     expect(await screen.findByText('Bạn chưa có đơn nào')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Xem menu' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Xem menu' })).toHaveAttribute('href', '/menu');
   });
 
   it('liệt kê đơn và phân trang gọi đúng page/limit (AC-08.1, AC-08.2)', async () => {

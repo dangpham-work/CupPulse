@@ -9,12 +9,12 @@ import { ProductCard } from './ProductCard';
 const ALL = 'all';
 
 /** Màn menu (FR-01): ba trạng thái loading / empty / error theo AC-01.3. Figma: 01 — Thực đơn + 08 — Trạng thái UI. */
-export function MenuView() {
+export function MenuView({ initialCategory }: { initialCategory?: string } = {}) {
   const { data, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
   });
-  const [active, setActive] = useState<string>(ALL);
+  const [active, setActive] = useState<string>(initialCategory ?? ALL);
   const [term, setTerm] = useState('');
 
   const categories = useMemo(() => uniqueCategories(data ?? []), [data]);
