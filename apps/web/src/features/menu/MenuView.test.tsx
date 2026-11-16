@@ -17,8 +17,8 @@ function jsonResponse(body: unknown, status = 200) {
   return Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
 }
 
-function renderMenu(initialCategory?: string) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderMenu(initialCategory?: string, retry: number | false = false) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry, retryDelay: 0 } } });
   return render(
     <QueryClientProvider client={client}>
       <MenuView initialCategory={initialCategory} />
@@ -48,6 +48,34 @@ describe('MenuView (FR-01, AC-01.3, AC-01.4)', () => {
     await screen.findByText('Cà phê sữa đá');
 
     expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/v1\/products$/);
+  });
+
+  it('API đang khởi động (lỗi mạng rồi thành công): tự thử lại và hiện menu, không báo lỗi', async () => {
+    let calls = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => (++calls === 1 ? Promise.reject(new TypeError('Failed to fetch')) : jsonResponse(products))),
+    );
+
+    renderMenu(undefined, 3);
+
+    expect(await screen.findByText('Cà phê sữa đá')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(calls).toBe(2);
+  });
+
+  it('hiện thông báo máy chủ đang khởi động khi lần tải đầu thất bại và đang thử lại', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: 5, retryDelay: 60_000 } } });
+    render(
+      <QueryClientProvider client={client}>
+        <MenuView />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText(/máy chủ đang khởi động/i)).toBeInTheDocument();
+    expect(screen.getByTestId('menu-skeleton')).toBeInTheDocument();
+    client.clear();
   });
 
   it('hiện "Chưa có món nào" khi danh sách rỗng', async () => {
