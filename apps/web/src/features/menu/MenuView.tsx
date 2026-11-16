@@ -10,7 +10,7 @@ const ALL = 'all';
 
 /** Màn menu (FR-01): ba trạng thái loading / empty / error theo AC-01.3. Figma: 01 — Thực đơn + 08 — Trạng thái UI. */
 export function MenuView({ initialCategory }: { initialCategory?: string } = {}) {
-  const { data, isPending, isError, refetch, isFetching } = useQuery({
+  const { data, isPending, isError, refetch, isFetching, failureCount } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
   });
@@ -45,7 +45,7 @@ export function MenuView({ initialCategory }: { initialCategory?: string } = {})
         </label>
       </div>
 
-      {isPending ? <MenuSkeleton /> : isError ? <MenuError onRetry={() => void refetch()} busy={isFetching} /> : data.length === 0 ? (
+      {isPending ? <MenuSkeleton waking={failureCount > 0} /> : isError ? <MenuError onRetry={() => void refetch()} busy={isFetching} /> : data.length === 0 ? (
         <p className="mt-16 text-center text-muted">Chưa có món nào</p>
       ) : (
         <>
@@ -119,9 +119,15 @@ function SearchIcon() {
   );
 }
 
-function MenuSkeleton() {
+/** waking: lần tải đầu thất bại và đang tự thử lại – thường do API Render free đang khởi động lại (~1 phút). */
+function MenuSkeleton({ waking = false }: { waking?: boolean }) {
   return (
     <div data-testid="menu-skeleton" aria-busy="true" aria-label="Đang tải menu">
+      {waking && (
+        <p role="status" className="mb-6 rounded-xl border border-line bg-tint px-4 py-3 text-sm text-ink">
+          Máy chủ đang khởi động sau thời gian nghỉ, menu sẽ hiện trong khoảng một phút. Bạn không cần tải lại trang.
+        </p>
+      )}
       <div className="mb-6 flex gap-2.5">
         {Array.from({ length: 5 }, (_, i) => (
           <div key={i} className="h-11 w-20 animate-pulse rounded-full bg-line" />

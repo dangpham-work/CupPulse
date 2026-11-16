@@ -22,6 +22,10 @@ test('khách đặt món và thanh toán thẻ thành công đến trang xác nh
 
   // 3. Đăng ký rồi đăng nhập (returnUrl được giữ)
   await page.getByRole('link', { name: 'Đăng ký' }).click();
+  // Trang đăng nhập cũng có ô Email/Mật khẩu: đợi chuyển hẳn sang /register rồi mới điền,
+  // nếu không sẽ điền nhầm vào form đăng nhập đang chờ bị thay.
+  await expect(page).toHaveURL(/\/register/);
+  await expect(page.getByLabel('Họ tên')).toBeVisible();
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Mật khẩu').fill(password);
   await page.getByLabel('Họ tên').fill('Khách E2E');
