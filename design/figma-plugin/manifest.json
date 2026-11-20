@@ -1,0 +1,9 @@
+{
+  "name": "BrewLite – Dựng Figma từ code",
+  "id": "brewlite-figma-generator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": { "allowedDomains": ["none"] }
+}

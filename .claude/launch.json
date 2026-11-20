@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "brewlite-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--env-file=apps/api/.env", "apps/api/dist/main.js"],
+      "port": 4000
+    },
+    {
+      "name": "brewlite-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@brewlite/web", "dev"],
+      "port": 3000
+    }
+  ]
+}
